@@ -1,0 +1,115 @@
+<launch>
+  <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+      <arg name="align_depth" value="True"/>
+      <arg name="color_fps" value="15"/>
+      <arg name="color_width" value="1280"/>
+      <arg name="color_height" value="720"/>
+      <arg name="depth_fps" value="15"/>
+      <arg name="depth_width" value="1280"/>
+      <arg name="depth_height" value="720"/>
+      <arg name="enable_pointcloud" value="True"/>
+      <arg name="enable_infra" value="True"/>
+      <arg name="filters" value="spatial,temporal,hole_filling,decimation,disparity"/>
+
+    </include>
+
+    <node name="pointcloud_preprocess" pkg="realsense_pointcloud" type="pointcloud_preprocess.py" output="screen" />
+
+    <!-- Convert the depth image and the rgb image into a xyzrgb Point Cloud -->
+    <!-- <node name="update_frame_id" pkg="depth_image_proc" type="update_frame_id.py" output="screen" /> -->
+    <!-- Nodelet manager for this pipeline -->
+    <node pkg="nodelet" type="nodelet" args="manager" name="standalone_nodelet" output="screen"/>
+
+    <!-- Convert to point cloud -->
+    <node pkg="nodelet" type="nodelet" name="depth_image_proc" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet --no-bond">
+        <!--remap from your specific sensors-->
+        <!-- Input: Camera calibration and metadata.  (sensor_msgs/CameraInfo) -->
+        <remap from="rgb/camera_info" to="/camera/color/camera_info"/>
+        <!-- Input: Rectified color image. (sensor_msgs/Image) -->
+        <remap from="rgb/image_rect_color" to="/camera/color/image_raw"/>
+        <!-- Input: Rectified depth image, registered to the RGB camera. (sensor_msgs/Image) -->
+        <remap from="depth_registered/image_rect" to="/filtered_depth_image"/>
+        <!-- Output: XYZ point cloud. If using PCL, subscribe as PointCloud<PointXYZ>.  (sensor_msgs/PointCloud2)  -->
+        <remap from="depth_registered/points" to="/point_cloud/points_light_filtered"/>
+
+    </node>
+
+
+
+
+    <!-- <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />  -->
+
+  <!-- Run a passthrough filter to clean NaNs -->
+  <!--
+  <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough pcl_manager" output="screen">
+    <remap from="~input" to="/camera/depth/color/points" />
+    <rosparam>
+      filter_field_name: z
+      filter_limit_min: 0.03
+      filter_limit_max: 1.0
+      filter_limit_negative: False
+    </rosparam>
+  </node>
+-->
+  <!--
+  <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
+  <remap from="~input" to="/camera/depth/color/pointss" />
+  <rosparam>
+    filter_field_name: z
+    filter_limit_min: 0.03
+    filter_limit_max: 1.2
+    filter_limit_negative: False
+    leaf_size: 0.01
+  </rosparam>
+</node>
+-->
+  <!--
+<node pkg="nodelet" type="nodelet" name="cropboxremoval" args="load pcl/CropBox pcl_manager" output="screen">
+<remap from="~input" to="voxel_grid/output" />
+<remap from="~output" to="/cropboxremoval/output" />
+<param name="~min_x" value="-0.5" />
+<param name="~max_x" value="0.5" />
+<param name="~min_y" value="-0.5" />
+<param name="~max_y" value="0.5" />
+<param name="~min_z" value="0.35" />
+<param name="~max_z" value="1" />
+</node>
+-->
+
+
+  <!--
+<node pkg="nodelet" type="nodelet" name="statisticalremoval"  args="load pcl/StatisticalOutlierRemoval pcl_manager" >
+   <remap from="~input" to="/cropboxremoval/output" />
+   <remap from="~output" to="/statistical_filtered_points/output" />
+   <param name="~stddev" value="1.5" />
+   <param name="~negative" value="False" />
+   <param name="~mean_k" value="40" />
+
+ </node>
+
+<node pkg="nodelet" type="nodelet" name="radiusremoval" args="load pcl/RadiusOutlierRemoval pcl_manager" output="screen">
+<remap from="~input" to="/statistical_filtered_points/output" />
+<remap from="~output" to="/radiusoutlier_filtered_points/output" />
+</node>
+
+-->
+<!--
+ <node pkg="nodelet" type="nodelet" name="psx" args="load pcl/RadiusOutlierRemoval box_filter_pcl_manager" output="screen">
+ <remap from="~input" to="outlier_removal/output" />
+ <remap from="~output" to="radiusoutlier_filtered_points" />
+ <rosparam>
+     radius_search: 0.2
+     min_neighbors: 4
+ </rosparam>
+</node>
+-->
+<!--
+
+  <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
+    <remap from="cloud_in" to="/radiusoutlier_filtered_points/output" />
+    <param name="resolution" value="0.005" />
+    <param name="frame_id" type="string" value="camera_link" />
+    <param name="sensor_model/max_range" value="1.5" />
+  </node>
+-->
+</launch>
