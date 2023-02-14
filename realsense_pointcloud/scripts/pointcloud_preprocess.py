@@ -1,8 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+
+import sys
 
 import cv2
 import rospy
-import open3d as o3d
+# import open3d as o3d
 from sensor_msgs.msg import Image, CameraInfo, CompressedImage
 from std_msgs.msg import Float64MultiArray
 import numpy as np
@@ -21,7 +23,6 @@ from cv_bridge import CvBridge, CvBridgeError
 
 # roslaunch realsense2_camera rs_camera.launch align_depth:=true mode:=manualcolor_fps:=15 color_width:=1280 color_height:=720 depth_fps:=15 depth_width:=1280 depth_height:=720 enable_pointcloud:=True flters:=spatial,temporal,hole_filling,decimation,disparity
 
-
 class pcl_preprocesser(object):
     def __init__(self):
         # Params
@@ -37,7 +38,7 @@ class pcl_preprocesser(object):
         # self.rgb_pub = rospy.Publisher('/rgb_crop',  Image, queue_size=1)
         self.depth_map_pub = rospy.Publisher('/filtered_depth_image',  Image, queue_size=1)
         # self.crop_par=rospy.Publisher('/crop_param',Float64MultiArray,queue_size=1)
-        self.stelldaten = rospy.Publisher('processed_pcl', PointCloud2, queue_size=10)
+        # self.stelldaten = rospy.Publisher('processed_pcl', PointCloud2, queue_size=10)
 
         # Subscribers
         # rospy.Subscriber("/passthrough/output", PointCloud2,self.pcl_callback,queue_size=1, buff_size=52428800)
@@ -190,6 +191,8 @@ class pcl_preprocesser(object):
 
         ts.registerCallback(self.reading_callback)
         rospy.loginfo("pointcloud_preprocess_is_working")
+        rospy.logerr(sys.version)
+
 
         rospy.spin()
         # array_msg=Float64MultiArray()

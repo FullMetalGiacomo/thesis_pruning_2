@@ -51,9 +51,9 @@
     </rosparam>
   </node>
 -->
-  <!--
-  <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
-  <remap from="~input" to="/camera/depth/color/pointss" />
+
+<node pkg="nodelet" type="nodelet" name="voxel_grid_ivan" args="load pcl/VoxelGrid pcl_manager" output="screen">
+  <remap from="~input" to="/camera/depth/color/points"/>
   <rosparam>
     filter_field_name: z
     filter_limit_min: 0.03
@@ -62,8 +62,8 @@
     leaf_size: 0.01
   </rosparam>
 </node>
--->
-  <!--
+
+
 <node pkg="nodelet" type="nodelet" name="cropboxremoval" args="load pcl/CropBox pcl_manager" output="screen">
 <remap from="~input" to="voxel_grid/output" />
 <remap from="~output" to="/cropboxremoval/output" />
@@ -74,10 +74,10 @@
 <param name="~min_z" value="0.35" />
 <param name="~max_z" value="1" />
 </node>
--->
 
 
-  <!--
+
+
 <node pkg="nodelet" type="nodelet" name="statisticalremoval"  args="load pcl/StatisticalOutlierRemoval pcl_manager" >
    <remap from="~input" to="/cropboxremoval/output" />
    <remap from="~output" to="/statistical_filtered_points/output" />
@@ -85,15 +85,15 @@
    <param name="~negative" value="False" />
    <param name="~mean_k" value="40" />
 
- </node>
+</node>
 
 <node pkg="nodelet" type="nodelet" name="radiusremoval" args="load pcl/RadiusOutlierRemoval pcl_manager" output="screen">
 <remap from="~input" to="/statistical_filtered_points/output" />
 <remap from="~output" to="/radiusoutlier_filtered_points/output" />
 </node>
 
--->
-<!--
+
+
  <node pkg="nodelet" type="nodelet" name="psx" args="load pcl/RadiusOutlierRemoval box_filter_pcl_manager" output="screen">
  <remap from="~input" to="outlier_removal/output" />
  <remap from="~output" to="radiusoutlier_filtered_points" />
@@ -101,8 +101,8 @@
      radius_search: 0.2
      min_neighbors: 4
  </rosparam>
-</node>
--->
+ </node>
+
 <!--
 
   <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
