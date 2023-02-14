@@ -1,0 +1,7 @@
+camera:
+  decimation:
+    frames_queue_size: 16
+    filter_magnitude: 7
+    stream_filter: 0
+    stream_format_filter: 1
+    stream_index_filter: -1
