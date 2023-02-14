@@ -2,8 +2,8 @@ camera:
   temporal:
     frames_queue_size: 16
     filter_smooth_delta: 20
-    holes_fill: 3
-    stream_filter: 1
+    holes_fill: 8
+    stream_filter: 3
     stream_format_filter: 1
     stream_index_filter: -1
     filter_smooth_alpha: 0.4000000059604645
