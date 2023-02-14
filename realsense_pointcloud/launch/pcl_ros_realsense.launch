@@ -1,4 +1,5 @@
 <launch>
+  <!-- https://dev.intelrealsense.com/docs/post-processing-filters -->
   <include file="$(find realsense2_camera)/launch/rs_camera.launch">
       <arg name="align_depth" value="True"/>
       <arg name="color_fps" value="15"/>
@@ -9,9 +10,17 @@
       <arg name="depth_height" value="720"/>
       <arg name="enable_pointcloud" value="True"/>
       <arg name="enable_infra" value="True"/>
-      <arg name="filters" value="spatial,temporal,hole_filling,decimation,disparity"/>
+      <arg name="filters" value="decimation,spatial,temporal,hole_filling"/>
+          <!-- <param name="/camera/decimation/filter_magnitude" value="1"/> -->
+          <!-- <param name="/camera/spatial/filter_magnitude" value="3"/> -->
+  </include>
 
-    </include>
+  <rosparam file="$(find realsense_pointcloud)/cfg/camera_decimation_filter.yaml" command="load" />
+  <rosparam file="$(find realsense_pointcloud)/cfg/camera_spatial_filter.yaml" command="load" />
+  <rosparam file="$(find realsense_pointcloud)/cfg/camera_temporal_filter.yaml" command="load" />
+  <rosparam file="$(find realsense_pointcloud)/cfg/camera_hole_filling_filter.yaml" command="load" />
+
+
 
     <node name="pointcloud_preprocess" pkg="realsense_pointcloud" type="pointcloud_preprocess.py" output="screen" />
 

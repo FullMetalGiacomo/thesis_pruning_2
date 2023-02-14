@@ -1,0 +1,11 @@
+camera:
+  spatial:
+    frames_queue_size: 16
+    filter_magnitude: 2
+    filter_smooth_delta: 20
+    filter_smooth_alpha: 0.5
+    holes_fill: 0
+    stream_filter: 1
+    stream_format_filter: 1
+    stream_index_filter: -1
+    filter_smooth_alpha: 0.5
