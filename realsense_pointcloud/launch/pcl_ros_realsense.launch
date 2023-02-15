@@ -23,7 +23,7 @@
 
     <node type="rviz" name="rviz" pkg="rviz" args="-d $(find realsense_pointcloud)/rviz/test_realsense.rviz" />
 
-
+    <!--The node removes points with higher intensity ( light ) publishes /filtered_depth_image-->
     <node name="pointcloud_preprocess" pkg="realsense_pointcloud" type="pointcloud_preprocess.py" output="screen" />
 
     <!-- Convert the depth image and the rgb image into a xyzrgb Point Cloud -->
@@ -99,14 +99,45 @@
 
 </node>
 
+<node name="color_based" pkg="jsk_pcl_ros" type="color_based_region_growing_segmentation" output="screen" >
+  <remap from="~input" to="/statistical_filtered_points/output" />
+  <rosparam>
+    distance_threshold: 100
+    point_color_threshold: 50
+    region_color_threshold: 50
+    min_cluster_size:600
+  </rosparam>
+</node>
 
+<node name="decomposer_color_based_clustering" pkg="jsk_pcl_ros" type="cluster_point_indices_decomposer" output="screen" >
+  <remap from="~input" to="/statistical_filtered_points/output" />
+  <remap from="~target" to="/color_based/output" />
+  <rosparam>
+    max_size: 10000
+    min_size: 600
+    usa_pca: True
+  </rosparam>
+</node>
 
+<node name="eucledian_clustering" pkg="jsk_pcl_ros" type="euclidean_clustering" output="screen" >
+  <remap from="~input" to="/statistical_filtered_points/output" />
+  <remap from="~input/cluster_indices" to="/color_based/output" />
+  <rosparam>
+    max_size: 10000
+    min_size: 600
+    cluster_filter: 0
+  </rosparam>
+</node>
 
-  <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
-    <remap from="cloud_in" to="/statistical_filtered_points/output" />
-    <param name="resolution" value="0.005" />
-    <param name="frame_id" type="string" value="camera_link" />
-    <param name="sensor_model/max_range" value="1.5" />
-  </node>
+<node name="decomposer_euclidean_based_clustering" pkg="jsk_pcl_ros" type="cluster_point_indices_decomposer" output="screen" >
+  <remap from="~input" to="/statistical_filtered_points/output" />
+  <remap from="~target" to="/eucledian_clustering/output" />
+  <rosparam>
+    distance_threshold: 100
+    point_color_threshold: 50
+    region_color_threshold: 50
+    min_cluster_size:600
+  </rosparam>
+</node>
 
 </launch>
