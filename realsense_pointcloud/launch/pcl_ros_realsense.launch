@@ -100,20 +100,20 @@
 </node>
 
 <node name="color_based" pkg="jsk_pcl_ros" type="color_based_region_growing_segmentation" output="screen" >
-  <remap from="~input" to="/statistical_filtered_points/output" />
-  <rosparam>
-    distance_threshold: 100
-    point_color_threshold: 50
-    region_color_threshold: 50
-    min_cluster_size:600
-  </rosparam>
+<remap from="~input" to="/statistical_filtered_points/output" />
+<rosparam>
+distance_threshold: 100
+point_color_threshold: 50
+region_color_threshold: 50
+min_cluster_size: 600
+</rosparam>
 </node>
 
 <node name="decomposer_color_based_clustering" pkg="jsk_pcl_ros" type="cluster_point_indices_decomposer" output="screen" >
   <remap from="~input" to="/statistical_filtered_points/output" />
   <remap from="~target" to="/color_based/output" />
   <rosparam>
-    max_size: 10000
+    max_size: 50000
     min_size: 600
     usa_pca: True
   </rosparam>
@@ -123,21 +123,22 @@
   <remap from="~input" to="/statistical_filtered_points/output" />
   <remap from="~input/cluster_indices" to="/color_based/output" />
   <rosparam>
-    max_size: 10000
+    tolerance: 0.05
+    max_size: 50000
     min_size: 600
     cluster_filter: 0
   </rosparam>
 </node>
 
 <node name="decomposer_euclidean_based_clustering" pkg="jsk_pcl_ros" type="cluster_point_indices_decomposer" output="screen" >
-  <remap from="~input" to="/statistical_filtered_points/output" />
-  <remap from="~target" to="/eucledian_clustering/output" />
-  <rosparam>
-    distance_threshold: 100
-    point_color_threshold: 50
-    region_color_threshold: 50
-    min_cluster_size:600
-  </rosparam>
+<remap from="~input" to="/statistical_filtered_points/output" />
+<remap from="~target" to="/eucledian_clustering/output" />
+<rosparam>
+distance_threshold: 100
+point_color_threshold: 50
+region_color_threshold: 50
+min_cluster_size: 600
+</rosparam>
 </node>
 
 </launch>
