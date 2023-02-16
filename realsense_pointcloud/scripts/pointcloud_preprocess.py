@@ -70,7 +70,7 @@ class pcl_preprocesser(object):
         depth_image_rect_copy=np.copy(depth_image_rect_copy)
         color_filter=((color_image_rect[:,:,0]<242) & (color_image_rect[:,:,1]<222) & (color_image_rect[:,:,2]<202) )
         
-        depth_image_rect_copy[HLS_image[:,:,1]>150]=0 # removing lightness points
+        depth_image_rect_copy[HLS_image[:,:,1]>100]=0 # removing lightness points
         depth_image_rect_copy[np.invert(color_filter)]=0 # removing color rgb
         # depth_image_rect_copy_1=depth_image_rect_copy & 0x0F
         # depth_image_rect_copy_0=depth_image_rect_copy & 0xF0

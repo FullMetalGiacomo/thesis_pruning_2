@@ -23,6 +23,14 @@
 
     <node type="rviz" name="rviz" pkg="rviz" args="-d $(find realsense_pointcloud)/rviz/test_realsense.rviz" />
 
+<!-- Remapping for italy rosbags -->
+    <!-- <remap from="/camera/color/camera_info" to="/camera_left_d435/color/camera_info"/>
+    <remap from="/camera/color/image_raw" to="/camera_left_d435/color/image_raw"/>
+    <remap from='/camera/aligned_depth_to_color/image_raw' to="/camera_left_d435/aligned_depth_to_color/image_raw"/>
+    <remap from="/camera/depth/color/points" to="/camera_left_d435/depth/color/points"/>
+    <remap from="camera_link" to="alitrak_base_link" /> -->
+
+
     <!--The node removes points with higher intensity ( light ) publishes /filtered_depth_image-->
     <node name="pointcloud_preprocess" pkg="realsense_pointcloud" type="pointcloud_preprocess.py" output="screen" />
 
@@ -57,7 +65,7 @@
     <rosparam>
       filter_field_name: z
       filter_limit_min: 0.03
-      filter_limit_max: 1.0
+      filter_limit_max: 2
       filter_limit_negative: False
     </rosparam>
   </node>
@@ -69,9 +77,9 @@
   <rosparam>
     filter_field_name: z
     filter_limit_min: 0.03
-    filter_limit_max: 1.2
+    filter_limit_max: 1.8
     filter_limit_negative: False
-    leaf_size: 0.001
+    leaf_size: 0.01
   </rosparam>
 </node>
 
@@ -79,12 +87,12 @@
 <node pkg="nodelet" type="nodelet" name="cropboxremoval" args="load pcl/CropBox pcl_manager" output="screen">
 <remap from="~input" to="voxel_grid/output" />
 <remap from="~output" to="/cropboxremoval/output" />
-<param name="~min_x" value="-0.5" />
-<param name="~max_x" value="0.5" />
-<param name="~min_y" value="-0.5" />
-<param name="~max_y" value="0.5" />
+<param name="~min_x" value="-1" />
+<param name="~max_x" value="1" />
+<param name="~min_y" value="-1" />
+<param name="~max_y" value="1" />
 <param name="~min_z" value="0.35" />
-<param name="~max_z" value="1" />
+<param name="~max_z" value="1.3" />
 </node>
 
 
@@ -102,10 +110,10 @@
 <node name="color_based" pkg="jsk_pcl_ros" type="color_based_region_growing_segmentation" output="screen" >
 <remap from="~input" to="/statistical_filtered_points/output" />
 <rosparam>
-distance_threshold: 100
-point_color_threshold: 50
-region_color_threshold: 50
-min_cluster_size: 600
+distance_threshold: 5
+point_color_threshold: 40
+region_color_threshold: 20
+min_cluster_size: 200
 </rosparam>
 </node>
 
@@ -114,7 +122,7 @@ min_cluster_size: 600
   <remap from="~target" to="/color_based/output" />
   <rosparam>
     max_size: 50000
-    min_size: 600
+    min_size: 200
     usa_pca: True
   </rosparam>
 </node>
@@ -123,9 +131,9 @@ min_cluster_size: 600
   <remap from="~input" to="/statistical_filtered_points/output" />
   <remap from="~input/cluster_indices" to="/color_based/output" />
   <rosparam>
-    tolerance: 0.05
+    tolerance: 0.15
     max_size: 50000
-    min_size: 600
+    min_size: 200
     cluster_filter: 0
   </rosparam>
 </node>
@@ -137,7 +145,7 @@ min_cluster_size: 600
 distance_threshold: 100
 point_color_threshold: 50
 region_color_threshold: 50
-min_cluster_size: 600
+min_cluster_size: 200
 </rosparam>
 </node>
 
