@@ -24,11 +24,11 @@
     <node type="rviz" name="rviz" pkg="rviz" args="-d $(find realsense_pointcloud)/rviz/test_realsense.rviz" />
 
 <!-- Remapping for italy rosbags -->
-    <!-- <remap from="/camera/color/camera_info" to="/camera_left_d435/color/camera_info"/>
+    <remap from="/camera/color/camera_info" to="/camera_left_d435/color/camera_info"/>
     <remap from="/camera/color/image_raw" to="/camera_left_d435/color/image_raw"/>
     <remap from='/camera/aligned_depth_to_color/image_raw' to="/camera_left_d435/aligned_depth_to_color/image_raw"/>
     <remap from="/camera/depth/color/points" to="/camera_left_d435/depth/color/points"/>
-    <remap from="camera_link" to="alitrak_base_link" /> -->
+    <remap from="camera_link" to="camera_left_d435_link" />
 
 
     <!--The node removes points with higher intensity ( light ) publishes /filtered_depth_image-->
@@ -148,5 +148,12 @@ region_color_threshold: 50
 min_cluster_size: 200
 </rosparam>
 </node>
+
+<!-- <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
+  <remap from="cloud_in" to="/statistical_filtered_points/output" />
+  <param name="resolution" value="0.005" />
+  <param name="frame_id" type="string" value="camera_link" />
+  <param name="sensor_model/max_range" value="3.0" />
+</node> -->
 
 </launch>

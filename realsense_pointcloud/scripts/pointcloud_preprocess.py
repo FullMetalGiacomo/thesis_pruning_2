@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import math
 
 import cv2
 import rospy
@@ -55,23 +56,124 @@ class pcl_preprocesser(object):
 
     def reading_callback(self,color_image_rect, depth_image_rect):
     # Solve all of perception here...
-        # print("hello images")
+        ################################################# READING
         color_image_rect=np.frombuffer(color_image_rect.data, dtype=np.uint8).reshape(color_image_rect.height, color_image_rect.width, -1)
         depth_image_rect_copy=np.frombuffer(depth_image_rect.data, dtype=np.uint16).reshape(depth_image_rect.height, depth_image_rect.width)
         # cv2.imshow('color_image_rect',color_image_rect)
         # cv2.waitKey(0)
+        ################################################# PLANT SEGMENTATION
+
+        # light removal
+        lightness_thresh=100; # dynamic param should be implemented
+        # HSL_MinLight = np.array([0,  0, 0],np.uint8)
+        # HSL_MaxLight = np.array([255, lightness_thresh, 255],np.uint8)
         HLS_image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2HLS_FULL)
+        # cv2.imshow('HLS_image',HLS_image)
+        # cv2.waitKey(0)
+        # HLS_image_without_lightness = cv2.inRange(HLS_image, HSL_MinLight, HSL_MaxLight)
+        # print(HLS_image_without_lightness)
+        # print(type(HLS_image_without_lightness))
+        # print(HLS_image_without_lightness.size)
+        # cv2.imshow('HLS_image_whithout_lightness',HLS_image_without_lightness)
+        # cv2.waitKey(0)
+        # ret,HLS_image_without_lightness_thresh = cv2.threshold(HLS_image_without_lightness,127,255,cv2.THRESH_BINARY)
+        # cv2.imshow('HLS_image_without_lightness_thresh',HLS_image_without_lightness_thresh)
+        # cv2.waitKey(0)
+        # HLS_image_without_lightness_bool=np.array([HLS_image_without_lightness_thresh==1])
+        # HLS_image_without_lightness_bool=np.squeeze(HLS_image_without_lightness_bool, axis=0)
+        # print(HLS_image_without_lightness_bool)
+        # print(type(HLS_image_without_lightness_bool))
+        # print(HLS_image_without_lightness_bool.shape)
+
+
+        # blue removal
+        # HSV_image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2HSV)
+        # cv2.imshow('HSV_image',HSV_image)
+        # cv2.waitKey(0)
+        # redChannel = np.copy(color_image_rect[:, :, 0])
+        # greenChannel = np.copy(color_image_rect[:, :, 1])
+        # blueChannel = np.copy(color_image_rect[:, :, 2])
+        # holder1 = blueChannel>greenChannel
+        # holder2 = blueChannel>redChannel
+        # predominant_blue_pixels_bool= holder1 & holder2
+        # print(predominant_blue_pixels_bool)
+        # print(type(predominant_blue_pixels_bool))
+        # print(predominant_blue_pixels_bool.shape)
+        # print(predominant_blue_pixels)
+        # print(type(predominant_blue_pixels))
+        # predominant_blue_pixels=np.uint8(predominant_blue_pixels_bool)*255
+
+        # test=np.array([np.array([blueChannel>greenChannel]) & np.array([blueChannel>redChannel]]))
+        # test = test.astype(np.uint8)
+        # HSV_MinBlue = np.array([90,  200, 200],np.uint8)
+        # HSV_MaxBlue = np.array([100, 255, 255],np.uint8)
+        # HSV_image_without_blue = cv2.inRange(HSV_image, HSV_MinBlue, HSV_MaxBlue)
+        # cv2.imshow('Blue channel', blueChannel)
+        # cv2.imshow('Green channel', greenChannel)
+        # cv2.imshow('Red channel', redChannel)
+        # cv2.imshow('predominant_blue_pixels', predominant_blue_pixels)
+        # cv2.imshow('HSV_image_without_blue',HSV_image_without_blue)
+        # cv2.waitKey(0)
         # print("hello HLS")
         # print(np.shape(HLS_image))
         # print(depth_image_rect)
         # print(np.shape(depth_image_rect))
         # print(np.shape(HLS_image[:,:,1]>150))
         # print(HLS_image[:,:,1]>150)
+
+
+        # depth_image_rect_copy[np.invert(HLS_image_without_lightness_bool)]=0 # removing lightness points
+
         depth_image_rect_copy=np.copy(depth_image_rect_copy)
-        color_filter=((color_image_rect[:,:,0]<242) & (color_image_rect[:,:,1]<222) & (color_image_rect[:,:,2]<202) )
-        
-        depth_image_rect_copy[HLS_image[:,:,1]>100]=0 # removing lightness points
-        depth_image_rect_copy[np.invert(color_filter)]=0 # removing color rgb
+        brown_color_filter=((color_image_rect[:,:,0]<242) & (color_image_rect[:,:,1]<222) & (color_image_rect[:,:,2]<202)) # selecting browns
+        # reduces effect of infrared
+        blue_color_filter=((color_image_rect[:,:,0]<60) & (color_image_rect[:,:,1]<150) & (color_image_rect[:,:,2]<255)) # selecting blues
+
+        depth_image_rect_copy[HLS_image[:,:,1]>lightness_thresh]=0 # removing lightness points
+        depth_image_rect_copy[np.invert(brown_color_filter)]=0 # removing color rgb
+        depth_image_rect_copy[np.invert(blue_color_filter)]=0 # removing color rgb
+
+        ################################################# CABLES SEGMENTATION https://docs.opencv.org/3.4/d9/db0/tutorial_hough_lines.html
+
+        # ret,gray_im = cv2.threshold(color_image_rect,127,255,cv2.THRESH_BINARY)
+        gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
+        cv2.imshow('gray_im',gray_im)
+        cv2.waitKey(0)
+        blur_im = cv2.GaussianBlur(gray_im, (3,3),1)
+        cv2.imshow('blur_im',blur_im)
+        cv2.waitKey(0)
+        canny_im = cv2.Canny(blur_im, 50, 150)
+        cv2.imshow('canny_im',canny_im)
+        cv2.waitKey(0)
+        lines = cv2.HoughLines(canny_im, 1, np.pi / 180, 250, None)
+
+        cdst = cv2.cvtColor(canny_im, cv2.COLOR_GRAY2BGR)
+        cdstP = np.copy(cdst)
+        if lines is not None:
+            for i in range(0, len(lines)):
+                rho = lines[i][0][0]
+                theta = lines[i][0][1]
+                a = math.cos(theta)
+                b = math.sin(theta)
+                x0 = a * rho
+                y0 = b * rho
+                pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+                pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+                cv2.line(cdst, pt1, pt2, (0,0,255), 1, cv2.LINE_AA)
+
+        linesP = cv2.HoughLinesP(canny_im, 1, np.pi / 180, 250, None,minLineLength=200,maxLineGap=100)
+        if linesP is not None:
+            for i in range(0, len(linesP)):
+                l = linesP[i][0]
+                cv2.line(cdstP, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv2.LINE_AA)
+
+
+        cv2.imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst)
+        cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
+
+        # cv2.imshow('depth_image_rect_copy',depth_image_rect_copy)
+        # cv2.waitKey(0)
+        # depth_image_rect_copy[predominant_blue_pixels_bool]=0 # removing color rgb
         # depth_image_rect_copy_1=depth_image_rect_copy & 0x0F
         # depth_image_rect_copy_0=depth_image_rect_copy & 0xF0
         # print(depth_image_rect_copy_0)
@@ -194,7 +296,7 @@ class pcl_preprocesser(object):
 
         ts.registerCallback(self.reading_callback)
         rospy.loginfo("pointcloud_preprocess_is_working")
-        rospy.logerr(sys.version)
+        # rospy.logerr(sys.version)
 
 
         rospy.spin()
