@@ -4,6 +4,7 @@ import sys
 import math
 
 import cv2
+from matplotlib import pyplot as plt
 import rospy
 # import open3d as o3d
 from sensor_msgs.msg import Image, CameraInfo, CompressedImage
@@ -38,6 +39,7 @@ class pcl_preprocesser(object):
         # Publishers
         # self.rgb_pub = rospy.Publisher('/rgb_crop',  Image, queue_size=1)
         self.depth_map_pub = rospy.Publisher('/filtered_depth_image',  Image, queue_size=1)
+        self.depth_cables_pub = rospy.Publisher('/filtered_depth_cables',  Image, queue_size=1)
         # self.crop_par=rospy.Publisher('/crop_param',Float64MultiArray,queue_size=1)
         # self.stelldaten = rospy.Publisher('processed_pcl', PointCloud2, queue_size=10)
 
@@ -59,6 +61,8 @@ class pcl_preprocesser(object):
         ################################################# READING
         color_image_rect=np.frombuffer(color_image_rect.data, dtype=np.uint8).reshape(color_image_rect.height, color_image_rect.width, -1)
         depth_image_rect_copy=np.frombuffer(depth_image_rect.data, dtype=np.uint16).reshape(depth_image_rect.height, depth_image_rect.width)
+        depth_image_rect_copy_cables=np.copy(depth_image_rect_copy)
+
         # cv2.imshow('color_image_rect',color_image_rect)
         # cv2.waitKey(0)
         ################################################# PLANT SEGMENTATION
@@ -125,6 +129,7 @@ class pcl_preprocesser(object):
         # depth_image_rect_copy[np.invert(HLS_image_without_lightness_bool)]=0 # removing lightness points
 
         depth_image_rect_copy=np.copy(depth_image_rect_copy)
+
         brown_color_filter=((color_image_rect[:,:,0]<242) & (color_image_rect[:,:,1]<222) & (color_image_rect[:,:,2]<202)) # selecting browns
         # reduces effect of infrared
         blue_color_filter=((color_image_rect[:,:,0]<60) & (color_image_rect[:,:,1]<150) & (color_image_rect[:,:,2]<255)) # selecting blues
@@ -133,44 +138,190 @@ class pcl_preprocesser(object):
         depth_image_rect_copy[np.invert(brown_color_filter)]=0 # removing color rgb
         depth_image_rect_copy[np.invert(blue_color_filter)]=0 # removing color rgb
 
+
         ################################################# CABLES SEGMENTATION https://docs.opencv.org/3.4/d9/db0/tutorial_hough_lines.html
+        # lightness_thresh_cables=150
+        # depth_image_rect_copy_cables[HLS_image[:,:,1]>lightness_thresh_cables]=0
+        #
+        # ################ image processing to get best thinned image
+        # # ret,gray_im = cv2.threshold(color_image_rect,127,255,cv2.THRESH_BINARY)
+        # # cv2.imshow('color_image_rect',color_image_rect)
+        # gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
+        # # cv2.imshow('gray_im',gray_im)
+        # # cv2.waitKey(0)
+        # blur_im = cv2.GaussianBlur(gray_im, (3,3),1)
+        # # cv2.imshow('blur_im',blur_im)
+        # # cv2.waitKey(0)
+        # # canny_im = cv2.Canny(blur_im, 50, 150)
+        # # cv2.imshow('canny_im',canny_im)
+        # # cv2.waitKey(0)
+        #
+        # binarized_im = cv2.adaptiveThreshold(blur_im,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY_INV,5,3)
+        # # cv2.imshow('binarized_im1',binarized_im1)
+        # # kernel = np.ones((3,3),np.uint8)
+        # # closed_im = cv2.morphologyEx(binarized_im1, cv2.MORPH_CLOSE, kernel)
+        # # cv2.imshow('closed_im',closed_im)
+        # # cv2.waitKey(0)
+        # # binarized_im2 = cv2.adaptiveThreshold(blur_im,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY_INV,5,2)
+        # # cv2.imshow('binarized_im2',binarized_im2)
+        # # cv2.waitKey(0)
+        #
+        # # thinned1 = cv2.ximgproc.thinning(binarized_im1, thinningType=cv2.ximgproc.THINNING_GUOHALL)
+        # # cv2.imshow('thinned_bin_1_ghuoall',thinned1)
+        # thinned_im = cv2.ximgproc.thinning(binarized_im)
+        # # cv2.imshow('thinned_im',thinned_im)
+        # # cv2.waitKey(0)
+        # # border_im = cv2.copyMakeBorder(thinned2, top=15, bottom=15, left=15, right=15, borderType=cv2.BORDER_CONSTANT)
+        # # cv2.imshow('border_im',border_im)
+        # # thinned11 = cv2.ximgproc.thinning(binarized_im2, thinningType=cv2.ximgproc.THINNING_GUOHALL)
+        # # cv2.imshow('thinned_bin_2_gouall',thinned11)
+        # # thinned22 = cv2.ximgproc.thinning(binarized_im2)
+        # # cv2.imshow('thinned_bin_2',thinned22)
+        # # cv2.waitKey(0)
+        #
+        #
+        # # Hough transform copies of thinned image for show
+        # cdst = cv2.cvtColor(thinned_im, cv2.COLOR_GRAY2BGR)
+        # cdstP = np.copy(cdst)
+        # # Hough values on rosbags
+        # hough_tresh=150
+        # minLineLength_value=150
+        # maxLineGap_value =10
+        # #########################3 HOUGH transform raw plot
+        # # linesP = cv2.HoughLinesP(thinned_im, 1, np.pi / 180, hough_tresh, None,minLineLength=minLineLength_value,maxLineGap=maxLineGap_value)
+        # # if linesP is not None:
+        # #     for i in range(0, len(linesP)):
+        # #         l = linesP[i][0]
+        # #         cv2.line(cdstP, (l[0], l[1]), (l[2], l[3]), (0,0,255), 2, cv2.LINE_AA)
+        # # cv2.imshow("gray_im", gray_im)
+        # # cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
+        # # cv2.waitKey(0)
+        #
+        # # the idea is to count the slope of the lines
+        # linesP = cv2.HoughLinesP(thinned_im, 1, np.pi / 180, hough_tresh, None,minLineLength=minLineLength_value,maxLineGap=maxLineGap_value)
+        # angle_list=[]
+        # b_list=[]
+        # if linesP is not None:
+        #     for i in range(0, len(linesP)):
+        #         # rospy.loginfo(linesP)
+        #         # rospy.loginfo(type(linesP))
+        #         # rospy.loginfo(linesP.shape)
+        #         l = linesP[i][0]
+        #         angle = np.arctan((l[3]-l[1]) /(l[2]-l[0])) *180/np.pi
+        #         # b_list.append(((-l[1]+720)-slope*l[0])/100)
+        #         b_list.append(l[1]- ((l[0]/(l[2]-l[0]))*(l[3]-l[1])) )
+        #         angle_list.append(angle)
+        #         r = np.random.randint(256)
+        #         g = np.random.randint(256)
+        #         b = np.random.randint(256)
+        #         cv2.line(cdstP, (l[0], l[1]), (l[2], l[3]), (r,g,b), 2, cv2.LINE_AA)
+        #
+        #
+        # angle_list = np.round(np.array(angle_list),1)
+        # b_list = np.array(b_list)
+        # lines_list = np.round(np.array([b_list,angle_list]),1)
+        #
+        # #normalizing list for data analysis, probably unuseful
+        # # b_list_norm = (b_list-np.min(b_list))/(np.max(b_list)-np.min(b_list))
+        # # angle_list_norm = (angle_list-np.min(angle_list))/(np.max(angle_list)-np.min(angle_list))
+        # # lines_list_norm = np.round(np.array([np.array(b_list_norm),np.array(angle_list_norm)]),2)
+        #
+        #
+        # #### removing outliers and 0 or 90 degrees lines
+        # # removing zeros and 90 degrees
+        # # zeros_index = np.squeeze(np.array(np.where(lines_list[1,:] == 0))) # find idx of zero slope
+        # # ninety_index = np.squeeze(np.array(np.where(lines_list[1,:] == 90))) # find idx of 90 slope
+        # #
+        # # if zeros_index is not None:
+        # #     lines_list = np.delete(lines_list, zeros_index,1)
+        # #
+        # # if ninety_index is not None:
+        # #     lines_list = np.delete(lines_list, ninety_index,1)
+        #
+        # ################# at the end no classification was made. Ask Ivan.
+        #
+        # # angle_distance_matrix = np.triu(np.round(np.abs(angle_list.T[:, None] - angle_list[None, :]),1))
+        # # rospy.loginfo(angle_distance_matrix)
+        # # ninety_degree_lines_idxs = np.where(((angle_distance_matrix<91) & (angle_distance_matrix>70)))
+        # # rospy.loginfo(ninety_degree_lines_idxs)
+        #
+        # # ninety_degree_lines_idx=np.unique(ninety_degree_lines_idxs[0])
+        # # rospy.loginfo(ninety_degree_lines_idx)
+        #
+        # # chosen_lines = lines_list[:,ninety_degree_lines_idx] # Uncomment for classification
+        # chosen_lines = lines_list[:,:]
+        # # rospy.loginfo(chosen_lines)
+        #
+        #
+        # chosen_lines_im_thinned = cv2.cvtColor(thinned_im, cv2.COLOR_GRAY2BGR)
+        # only_cables_image = np.zeros((depth_image_rect.height,depth_image_rect.width,3), np.uint8)
+        #
+        #
+        # if chosen_lines is not None:
+        #     for i in range(0, len(chosen_lines[0])):
+        #         r = np.random.randint(256)
+        #         g = np.random.randint(256)
+        #         b = np.random.randint(256)
+        #         u1 = 0
+        #         v1 = int(chosen_lines[0,i])
+        #         u2 = 1280
+        #         v2 = int(u2*np.tan(chosen_lines[1,i]*np.pi/180)+chosen_lines[0,i])
+        #         cv2.line(chosen_lines_im_thinned, (u1, v1), (u2, v2), (r,g,b), 2, cv2.LINE_AA)
+        #         cv2.line(only_cables_image, (u1, v1), (u2, v2), (255,255,255), 1, cv2.LINE_AA)
+        #
+        #
+        #
+        #
+        #
+        # ###########################3 PLT PLOT
+        # # Set the figure size
+        # # plt.figure("data")
+        # # plt.scatter(lines_list[0,:],lines_list[1,:])
+        # # plt.xlabel('b')
+        # # plt.ylabel('angle')
+        # # plt.grid()
+        # #
+        # # plt.figure("normalized_data")
+        # # plt.scatter(lines_list_norm[0,:],lines_list_norm[1,:])
+        # # plt.xlabel('b_normalized')
+        # # plt.ylabel('angle_normalized')
+        # # plt.grid()
+        # # plt.figure("image_reference")
+        # # plt.imshow(cdstP)
+        # # plt.figure("image_reference_chosen_lines")
+        # # plt.imshow(chosen_lines_im)
+        # #
+        # #
+        # # # cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
+        # # # rospy.loginfo("histogram part")
+        # # # plt.figure("histogram")
+        # # # angle_list_sorted=np.sort(angle_list)
+        # # # hist,bins = np.histogram(angle_list_sorted)
+        # # # rospy.loginfo(hist)
+        # # # rospy.loginfo(bins)
+        # # # rospy.loginfo(angle_list_sorted)
+        # # # plt.bars(hist, bins)
+        # #
+        # # plt.show()
+        #
+        # ############### Only cables processing
+        # only_cables_gray_image = cv2.cvtColor(only_cables_image, cv2.COLOR_RGB2GRAY)
+        # th, binarized_only_cables_im = cv2.threshold(only_cables_gray_image, 128, 255, cv2.THRESH_BINARY_INV)
+        # # cv2.imshow("binarized_only_cables_im", binarized_only_cables_im)
+        # binarized_only_cables_im.dtype='bool'
+        # # rospy.loginfo(binarized_only_cables_im)
+        # # rospy.loginfo(type(binarized_only_cables_im))
+        # # rospy.loginfo(binarized_only_cables_im.shape)
+        # # rospy.loginfo(type(depth_image_rect_copy_cables))
+        # # rospy.loginfo(depth_image_rect_copy_cables.shape)
+        # # cv2.waitKey(0)
+        #
+        # depth_image_rect_copy_cables[binarized_only_cables_im]=0
+        # # rospy.loginfo(type(depth_image_rect_copy_cables))
+        # # rospy.loginfo(depth_image_rect_copy_cables.shape)
 
-        # ret,gray_im = cv2.threshold(color_image_rect,127,255,cv2.THRESH_BINARY)
-        gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
-        cv2.imshow('gray_im',gray_im)
-        cv2.waitKey(0)
-        blur_im = cv2.GaussianBlur(gray_im, (3,3),1)
-        cv2.imshow('blur_im',blur_im)
-        cv2.waitKey(0)
-        canny_im = cv2.Canny(blur_im, 50, 150)
-        cv2.imshow('canny_im',canny_im)
-        cv2.waitKey(0)
-        lines = cv2.HoughLines(canny_im, 1, np.pi / 180, 250, None)
 
-        cdst = cv2.cvtColor(canny_im, cv2.COLOR_GRAY2BGR)
-        cdstP = np.copy(cdst)
-        if lines is not None:
-            for i in range(0, len(lines)):
-                rho = lines[i][0][0]
-                theta = lines[i][0][1]
-                a = math.cos(theta)
-                b = math.sin(theta)
-                x0 = a * rho
-                y0 = b * rho
-                pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
-                pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
-                cv2.line(cdst, pt1, pt2, (0,0,255), 1, cv2.LINE_AA)
-
-        linesP = cv2.HoughLinesP(canny_im, 1, np.pi / 180, 250, None,minLineLength=200,maxLineGap=100)
-        if linesP is not None:
-            for i in range(0, len(linesP)):
-                l = linesP[i][0]
-                cv2.line(cdstP, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv2.LINE_AA)
-
-
-        cv2.imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst)
-        cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
-
+        ######################## PUBLISHING
         # cv2.imshow('depth_image_rect_copy',depth_image_rect_copy)
         # cv2.waitKey(0)
         # depth_image_rect_copy[predominant_blue_pixels_bool]=0 # removing color rgb
@@ -189,6 +340,15 @@ class pcl_preprocesser(object):
         self.imgmsg_depth.encoding="16UC1"
         # self.imgmsg_depth.step=len(self.imgmsg_depth.data) // self.imgmsg_depth.height
         self.depth_map_pub.publish(self.imgmsg_depth)
+        #
+        # self.imgmsg_depth_cables = self.bridge.cv2_to_imgmsg(depth_image_rect_copy_cables, "16UC1")
+        # self.imgmsg_depth_cables.header = depth_image_rect.header
+        # self.imgmsg_depth_cables.height=depth_image_rect.height
+        # self.imgmsg_depth_cables.width=depth_image_rect.width
+        # self.imgmsg_depth_cables.encoding="16UC1"
+        # # self.imgmsg_depth.step=len(self.imgmsg_depth.data) // self.imgmsg_depth.height
+        # self.depth_cables_pub.publish(self.imgmsg_depth_cables)
+
         # print(np.shape(depth_image_rect_copy))
         # print(type(depth_image_rect_copy))
         # print(depth_image_rect_copy)
@@ -206,85 +366,6 @@ class pcl_preprocesser(object):
 
 
 
-
-# https://stackoverflow.com/questions/39772424/how-to-effeciently-convert-ros-pointcloud2-to-pcl-point-cloud-and-visualize-it-i
-    def pcl_callback(self, ros_point_cloud):
-
-        print("hello2")
-
-        xyz = np.array([[0,0,0]])
-        rgb = np.array([[0,0,0]])
-        #self.lock.acquire()
-        print("hello2")
-        gen = pc2.read_points(ros_point_cloud, skip_nans=True)
-        int_data = list(gen)
-
-        for x in int_data:
-            test = x[3]
-            # cast float32 to int so that bitwise operations are possible
-            s = struct.pack('>f' ,test)
-            i = struct.unpack('>l',s)[0]
-            # you can get back the float value by the inverse operations
-            pack = ctypes.c_uint32(i).value
-            r = (pack & 0x00FF0000)>> 16
-            g = (pack & 0x0000FF00)>> 8
-            b = (pack & 0x000000FF)
-            # prints r,g,b values in the 0-255 range
-                        # x,y,z can be retrieved from the x[0],x[1],x[2]
-            xyz = np.append(xyz,[[x[0],x[1],x[2]]], axis = 0)
-            rgb = np.append(rgb,[[r,g,b]], axis = 0)
-    #
-    def rgb_callback(self, data):
-        # image=np.frombuffer(data.data, dtype=np.uint8).reshape(data.height, data.width, -1)
-        image = np.fromstring(data.data, np.uint8)
-        image = cv2.imdecode(image, cv2.IMREAD_COLOR)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        h, w, c=np.shape(image)
-        xl=int(w*self.cropParam[3])
-        xr=int(w-w*self.cropParam[1])
-        yu=int(h*self.cropParam[0])
-        yd=int(h - h*self.cropParam[2])
-        self.crop_box=[yu,xl]
-        # xl=int(data.width*self.cropParam[3])
-        # xr=int(data.width-data.width*self.cropParam[1])
-        # yu=int(data.height*self.cropParam[0])
-        # yd=int(data.height - data.height*self.cropParam[2])
-        image=image[yu:yd,xl:xr]
-        # print(image.shape)
-        self.imgmsg = Image()
-        self.imgmsg.data = image.flatten().tolist()
-        self.imgmsg.height=image.shape[0]
-        self.imgmsg.width=image.shape[1]
-        self.imgmsg.encoding="rgb8"
-        self.imgmsg.step=len(self.imgmsg.data) // self.imgmsg.height
-
-        self.rgb_pub.publish(self.imgmsg)
-
-    def depth_callback(self, data):
-        image=np.frombuffer(data.data, dtype=np.uint8).reshape(data.height, data.width, -1)
-        xl=int(data.width*self.cropParam[3])
-        xr=int(data.width-data.width*self.cropParam[1])
-        yu=int(data.height*self.cropParam[0])
-        yd=int(data.height - data.height*self.cropParam[2])
-        # image = np.fromstring(data.data, np.uint8)
-        # rospy.logwarn(np.shape(data.data))
-        # image = cv2.imdecode(image, cv2.IMREAD_GRAYSCALE)
-        # h, w=np.shape(image)
-        #
-        # xl=int(w*self.cropParam[3])
-        # xr=int(w-w*self.cropParam[1])
-        # yu=int(h*self.cropParam[0])
-        # yd=int(h - h*self.cropParam[2])
-        image=image[yu:yd,xl:xr,:]
-        # print(image.shape)
-        self.imgmsg_d = Image()
-        self.imgmsg_d.data = image.flatten().tolist()
-        self.imgmsg_d.height=image.shape[0]
-        self.imgmsg_d.width=image.shape[1]
-        self.imgmsg_d.encoding="16UC1"
-        self.imgmsg_d.step=len(self.imgmsg_d.data) // self.imgmsg_d.height
-
-        self.depth_map_pub.publish(self.imgmsg_d)
 
     def start(self):
         rospy.loginfo("Starting pcl preprocesser")

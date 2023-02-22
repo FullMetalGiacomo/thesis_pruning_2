@@ -21,18 +21,24 @@
   <rosparam file="$(find realsense_pointcloud)/cfg/camera_temporal_filter.yaml" command="load" />
   <rosparam file="$(find realsense_pointcloud)/cfg/camera_hole_filling_filter.yaml" command="load" />
 
-    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find realsense_pointcloud)/rviz/test_realsense.rviz" />
+  <!-- Remapping for italy rosbags -->
+      <remap from="/camera/color/camera_info" to="/camera_left_d435/color/camera_info"/>
+      <remap from="/camera/color/image_raw" to="/camera_left_d435/color/image_raw"/>
+      <remap from='/camera/aligned_depth_to_color/image_raw' to="/camera_left_d435/aligned_depth_to_color/image_raw"/>
+      <remap from='/camera/color/image_raw/compressed' to="/camera_left_d435/color/image_raw/compressed"/>
+      <remap from="/camera/depth/color/points" to="/camera_left_d435/depth/color/points"/>
+      <remap from="/camera/depth/camera_info" to="/camera_left_d435/depth/camera_info"/>
+      <remap from="camera_link" to="camera_left_d435_link" />
 
-<!-- Remapping for italy rosbags -->
-    <remap from="/camera/color/camera_info" to="/camera_left_d435/color/camera_info"/>
-    <remap from="/camera/color/image_raw" to="/camera_left_d435/color/image_raw"/>
-    <remap from='/camera/aligned_depth_to_color/image_raw' to="/camera_left_d435/aligned_depth_to_color/image_raw"/>
-    <remap from="/camera/depth/color/points" to="/camera_left_d435/depth/color/points"/>
-    <remap from="camera_link" to="camera_left_d435_link" />
+
+
+
+
 
 
     <!--The node removes points with higher intensity ( light ) publishes /filtered_depth_image-->
     <node name="pointcloud_preprocess" pkg="realsense_pointcloud" type="pointcloud_preprocess.py" output="screen" />
+    <node name="pointcloud_cable_preprocess" pkg="realsense_pointcloud" type="pointcloud_cables.py" output="screen" />
 
     <!-- Convert the depth image and the rgb image into a xyzrgb Point Cloud -->
     <!-- <node name="update_frame_id" pkg="depth_image_proc" type="update_frame_id.py" output="screen" /> -->
@@ -40,7 +46,7 @@
     <node pkg="nodelet" type="nodelet" args="manager" name="standalone_nodelet" output="screen"/>
 
     <!-- Convert to point cloud -->
-    <node pkg="nodelet" type="nodelet" name="depth_image_proc" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet --no-bond">
+    <node pkg="nodelet" type="nodelet" name="depth_image_proc" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet no-bond">
         <!--remap from your specific sensors-->
         <!-- Input: Camera calibration and metadata.  (sensor_msgs/CameraInfo) -->
         <remap from="rgb/camera_info" to="/camera/color/camera_info"/>
@@ -52,6 +58,30 @@
         <remap from="depth_registered/points" to="/point_cloud/points_light_filtered"/>
 
     </node>
+
+    <!-- same node as above -->
+    <node pkg="nodelet" type="nodelet" name="depth_image_proc_cables" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet --no-bond">
+        <!--remap from your specific sensors-->
+        <!-- Input: Camera calibration and metadata.  (sensor_msgs/CameraInfo) -->
+        <remap from="rgb/camera_info" to="/camera/color/camera_info"/>
+        <!-- Input: Rectified color image. (sensor_msgs/Image) -->
+        <remap from="rgb/image_rect_color" to="/camera/color/image_raw"/>
+        <!-- Input: Rectified depth image, registered to the RGB camera. (sensor_msgs/Image) -->
+        <remap from="depth_registered/image_rect" to="/filtered_depth_cables"/>
+        <!-- Output: XYZ point cloud. If using PCL, subscribe as PointCloud<PointXYZ>.  (sensor_msgs/PointCloud2)  -->
+        <remap from="depth_registered/points" to="/point_cloud/point_cables"/>
+
+    </node>
+
+
+<!--
+  <node pkg="nodelet" type="nodelet" name="nodelet1_test" args="load depth_image_proc/point_cloud_xyz standalone_nodelet no-bond">
+    <remap from="camera_info" to="/camera_left_d435/depth/camera_info"/>
+    <remap from="image_rect" to="/filtered_depth_cables"/>
+    <remap from="points" to="/points_cables_test"/>
+  </node> -->
+
+
 
 
 
@@ -155,5 +185,8 @@ min_cluster_size: 200
   <param name="frame_id" type="string" value="camera_link" />
   <param name="sensor_model/max_range" value="3.0" />
 </node> -->
+
+<node type="rviz" name="rviz" pkg="rviz" args="-d $(find realsense_pointcloud)/rviz/test_realsense.rviz" />
+
 
 </launch>
