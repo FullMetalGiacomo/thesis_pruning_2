@@ -1,0 +1,26 @@
+arm_module_rate_hz: 1.0
+
+move_num_retries: 1
+move_feedback_watchdog_time_s: 1.0
+move_enable_watchdog: False
+move_timeout_s: 10.0
+move_enable_timeout: True
+move_enabled: True
+
+#joint states watchdog time
+js_watchdog_time_s: 1.0
+
+planner_id: "RRTkConfigDefault"
+group_name: "arm_left_torso"
+max_plan_attempts: 5
+max_plan_time: 10.0
+max_vel_scale: 1.0
+end_effector_tool: "gripper_left_grasping_frame"
+
+ws_frame_id: "/base_footprint"
+ws_x_min: -1.0
+ws_y_min: -1.0
+ws_z_min: -1.0
+ws_x_max: 1.0
+ws_y_max: 1.0
+ws_z_max: 1.0

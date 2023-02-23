@@ -1,0 +1,10 @@
+rate: 15.0
+broadcast:    True
+parent_id:   'gripper_left_link'
+frame_id:    'camera_1_color_optical_frame'
+x:     0.008
+y:     -0.097
+z:     -0.098
+roll:  3.124
+pitch: -0.049
+yaw:   3.138

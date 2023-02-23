@@ -46,7 +46,7 @@
     <node pkg="nodelet" type="nodelet" args="manager" name="standalone_nodelet" output="screen"/>
 
     <!-- Convert to point cloud -->
-    <node pkg="nodelet" type="nodelet" name="depth_image_proc" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet no-bond">
+    <node pkg="nodelet" type="nodelet" name="depth_image_proc" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet --no-bond">
         <!--remap from your specific sensors-->
         <!-- Input: Camera calibration and metadata.  (sensor_msgs/CameraInfo) -->
         <remap from="rgb/camera_info" to="/camera/color/camera_info"/>
@@ -61,6 +61,8 @@
 
     <!-- same node as above -->
     <node pkg="nodelet" type="nodelet" name="depth_image_proc_cables" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet --no-bond">
+        <!--framerate of input depth is lower then camera framrate, parameter waits for 30 imgs-->
+    	<param name="queue_size" value="30" />
         <!--remap from your specific sensors-->
         <!-- Input: Camera calibration and metadata.  (sensor_msgs/CameraInfo) -->
         <remap from="rgb/camera_info" to="/camera/color/camera_info"/>

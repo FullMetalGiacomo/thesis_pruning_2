@@ -1,0 +1,10 @@
+rate: 10.0
+broadcast:    True
+parent_id:   'xtion_optical_frame'
+frame_id:    'camera_0_color_optical_frame'
+x:     -0.0124
+y:     -0.0823
+z:     0.01692
+roll:   0.0152272
+pitch: 0.0283539
+yaw:   0.0121376
