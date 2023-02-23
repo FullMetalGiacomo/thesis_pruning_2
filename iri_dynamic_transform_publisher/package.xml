@@ -53,7 +53,8 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>iri_base_algorithm</depend>
   <depend>tf</depend>
-
+  <depend>tf2_ros</depend>
+  <depend>geometry_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
