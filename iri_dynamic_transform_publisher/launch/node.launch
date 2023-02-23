@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!-- -->
+<launch>
+  
+  <arg name="node_name" default="iri_dynamic_transform_publisher"/>
+  <arg name="params_filename" default="params.yaml"/>
+  <arg name="params_path" default="$(find iri_dynamic_transform_publisher)/param/$(arg params_filename)"/>
+
+    <node pkg ="iri_dynamic_transform_publisher"
+          type="iri_dynamic_transform_publisher"
+          name="$(arg node_name)"
+          output="screen">
+      <rosparam command="load" file="$(arg params_path)" />
+    </node>
+
+</launch>

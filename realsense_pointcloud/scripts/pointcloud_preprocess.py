@@ -39,7 +39,7 @@ class pcl_preprocesser(object):
         # Publishers
         # self.rgb_pub = rospy.Publisher('/rgb_crop',  Image, queue_size=1)
         self.depth_map_pub = rospy.Publisher('/filtered_depth_image',  Image, queue_size=1)
-        self.depth_cables_pub = rospy.Publisher('/filtered_depth_cables',  Image, queue_size=1)
+        # self.depth_cables_pub = rospy.Publisher('/filtered_depth_cables',  Image, queue_size=1)
         # self.crop_par=rospy.Publisher('/crop_param',Float64MultiArray,queue_size=1)
         # self.stelldaten = rospy.Publisher('processed_pcl', PointCloud2, queue_size=10)
 

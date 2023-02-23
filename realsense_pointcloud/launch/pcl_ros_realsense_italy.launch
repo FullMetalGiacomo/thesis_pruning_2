@@ -21,6 +21,14 @@
   <rosparam file="$(find realsense_pointcloud)/cfg/camera_temporal_filter.yaml" command="load" />
   <rosparam file="$(find realsense_pointcloud)/cfg/camera_hole_filling_filter.yaml" command="load" />
 
+  <!-- Remapping for italy rosbags -->
+      <remap from="/camera/color/camera_info" to="/camera_left_d435/color/camera_info"/>
+      <remap from="/camera/color/image_raw" to="/camera_left_d435/color/image_raw"/>
+      <remap from='/camera/aligned_depth_to_color/image_raw' to="/camera_left_d435/aligned_depth_to_color/image_raw"/>
+      <remap from='/camera/color/image_raw/compressed' to="/camera_left_d435/color/image_raw/compressed"/>
+      <remap from="/camera/depth/color/points" to="/camera_left_d435/depth/color/points"/>
+      <remap from="/camera/depth/camera_info" to="/camera_left_d435/depth/camera_info"/>
+      <remap from="camera_link" to="camera_left_d435_link" />
 
 
 

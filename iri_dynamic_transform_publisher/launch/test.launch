@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!-- -->
+<launch>
+
+  <arg name="node_name"       default="iri_dynamic_transform_publisher"/>
+  <arg name="params_filename" default="params.yaml"/>
+
+  <include file="$(find iri_dynamic_transform_publisher)/launch/node.launch">
+    <arg name="node_name"       value="$(arg node_name)"/>
+    <arg name="params_filename" value="$(arg params_filename)"/>
+  </include>
+  
+  <node pkg="rviz" 
+        type="rviz" 
+        name="rviz_$(arg node_name)" 
+        args="-d $(find iri_dynamic_transform_publisher)/rviz/test.rviz">
+  </node>
+  
+  <node pkg="rqt_reconfigure"
+        type="rqt_reconfigure"
+        name="rqt_reconfigure_$(arg node_name)"
+        args="$(arg node_name)">
+  </node>
+
+</launch>
