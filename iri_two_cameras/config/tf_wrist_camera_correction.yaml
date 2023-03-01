@@ -1,0 +1,41 @@
+!!python/object/new:dynamic_reconfigure.encoding.Config
+dictitems:
+  broadcast: true
+  frame_id: camera_1_link
+  groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+    dictitems:
+      broadcast: true
+      frame_id: camera_1_link
+      groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+        state: []
+      id: 0
+      name: Default
+      parameters: !!python/object/new:dynamic_reconfigure.encoding.Config
+        state: []
+      parent: 0
+      parent_id: gripper_left_link
+      period: 100.0
+      pitch: 1.5
+      reset_rotation: false
+      reset_translation: false
+      roll: -1.79
+      show_rosrun: false
+      state: true
+      type: ''
+      x: 0.05
+      y: -0.16
+      yaw: 2.91
+      z: -0.17
+    state: []
+  parent_id: gripper_left_link
+  period: 100.0
+  pitch: 1.5
+  reset_rotation: false
+  reset_translation: false
+  roll: -1.79
+  show_rosrun: false
+  x: 0.05
+  y: -0.16
+  yaw: 2.91
+  z: -0.17
+state: []

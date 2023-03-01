@@ -4,20 +4,20 @@ parent_id:   'xtion_optical_frame'
 frame_id:    'camera_0_link'
 
 
-x:     0.00262311
-y:     -0.0820151
-z:     0.0173944
-roll:   2.0688757
-pitch: -1.5306075
-yaw:   -0.4941516
+x:     0.0052118
+y:     -0.084231
+z:     0.001719
+roll:   0.9488132
+pitch: -1.5543316
+yaw:   0.6259723
 
 
 #parent_id:   'xtion_optical_frame'
 #frame_id:    'camera_0_color_optical_frame'
 
-#x:     -0.0124
-#y:     -0.0823
-#z:     0.01692
-#roll:   0.0152272
-#pitch: 0.0283539
-#yaw:   0.0121376
+#x:     -0.0098
+#y:     -0.0843
+#z:     0.00092
+#roll:   -0.0137495
+#pitch: 0.0066511
+#yaw:   0.01099

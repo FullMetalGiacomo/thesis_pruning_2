@@ -1,20 +1,21 @@
 rate: 15.0
 broadcast:    True
+
 parent_id:   'gripper_left_link'
 frame_id:    'camera_1_link'
-x:     -0.00703129
-y:     -0.0968139
-z:     -0.0981603
-roll:  -1.7990633
-pitch:  1.5135023
-yaw:   2.9014497
+x:     -0.0320037
+y:     -0.109751
+z:     -0.113909
+roll:  -0.176643
+pitch: 1.5364618
+yaw:   -1.7661877
 
-
-#parent_id:   'gripper_left_link'
+#parent_id:   'xtion_optical_frame'
 #frame_id:    'camera_1_color_optical_frame'
-#x:     0.008
-#y:     -0.097
-#z:     -0.098
-#roll:  3.124
-#pitch: -0.049
-#yaw:   3.138
+
+#x:     -0.5478
+#y:     -0.02372
+#z:     -0.0177839
+#roll:   0.140448
+#pitch: 0.39953
+#yaw:   0.0564898
