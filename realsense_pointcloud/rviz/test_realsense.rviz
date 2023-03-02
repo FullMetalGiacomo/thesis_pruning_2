@@ -281,7 +281,7 @@ Visualization Manager:
       Queue Size: 8
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.003000000026077032
       Style: Flat Squares
       Topic: /point_cloud/point_cables
       Unreliable: false
@@ -324,9 +324,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 5.420368194580078
-        Y: 0.27013975381851196
-        Z: -0.23229193687438965
+        X: 5.296081066131592
+        Y: 0.3668495714664459
+        Z: -0.8108075261116028
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

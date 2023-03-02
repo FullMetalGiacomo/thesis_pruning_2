@@ -68,7 +68,7 @@ class pcl_preprocesser(object):
         ################################################# PLANT SEGMENTATION
 
         # light removal
-        lightness_thresh=255; # dynamic param should be implemented
+        lightness_thresh=100; # dynamic param should be implemented
         # HSL_MinLight = np.array([0,  0, 0],np.uint8)
         # HSL_MaxLight = np.array([255, lightness_thresh, 255],np.uint8)
         HLS_image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2HLS_FULL)
@@ -130,13 +130,13 @@ class pcl_preprocesser(object):
 
         depth_image_rect_copy=np.copy(depth_image_rect_copy)
 
-        #brown_color_filter=((color_image_rect[:,:,0]<242) & (color_image_rect[:,:,1]<222) & (color_image_rect[:,:,2]<202)) # selecting browns
+        brown_color_filter=((color_image_rect[:,:,0]<242) & (color_image_rect[:,:,1]<222) & (color_image_rect[:,:,2]<202)) # selecting browns
         # reduces effect of infrared
-        #blue_color_filter=((color_image_rect[:,:,0]<60) & (color_image_rect[:,:,1]<150) & (color_image_rect[:,:,2]<255)) # selecting blues
+        blue_color_filter=((color_image_rect[:,:,0]<60) & (color_image_rect[:,:,1]<150) & (color_image_rect[:,:,2]<255)) # selecting blues
 
         depth_image_rect_copy[HLS_image[:,:,1]>lightness_thresh]=0 # removing lightness points
-        #depth_image_rect_copy[np.invert(brown_color_filter)]=0 # removing color rgb
-        #depth_image_rect_copy[np.invert(blue_color_filter)]=0 # removing color rgb
+        depth_image_rect_copy[np.invert(brown_color_filter)]=0 # removing color rgb
+        depth_image_rect_copy[np.invert(blue_color_filter)]=0 # removing color rgb
 
 
         ################################################# CABLES SEGMENTATION https://docs.opencv.org/3.4/d9/db0/tutorial_hough_lines.html
