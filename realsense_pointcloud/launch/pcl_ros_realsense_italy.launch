@@ -38,7 +38,7 @@
 
     <!--The node removes points with higher intensity ( light ) publishes /filtered_depth_image-->
     <node name="pointcloud_preprocess" pkg="realsense_pointcloud" type="pointcloud_preprocess.py" output="screen" />
-    <node name="pointcloud_cable_preprocess" pkg="realsense_pointcloud" type="pointcloud_cables.py" output="screen" />
+    <node name="pointcloud_cable_preprocess" pkg="realsense_pointcloud" type="pointcloud_cables_pcl.py" output="screen" />
 
     <!-- Convert the depth image and the rgb image into a xyzrgb Point Cloud -->
     <!-- <node name="update_frame_id" pkg="depth_image_proc" type="update_frame_id.py" output="screen" /> -->

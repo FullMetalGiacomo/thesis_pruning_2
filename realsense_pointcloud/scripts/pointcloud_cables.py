@@ -41,6 +41,7 @@ class cable_preprocesser(object):
         self.u=np.resize(self.u,(720,1280))
         self.v=np.array(np.arange(0,720))
         self.v=np.resize(self.v,(1280,720)).T
+
         # Node cycle rate (in Hz).
         #self.loop_rate = rospy.Rate(10)
         self.bridge = CvBridge()
@@ -137,213 +138,253 @@ class cable_preprocesser(object):
         # cv2.waitKey(0)
 
         # the idea is to count the slope of the lines
-        linesP = cv2.HoughLinesP(thinned_im, 1, np.pi / 180, hough_tresh, None,minLineLength=minLineLength_value,maxLineGap=maxLineGap_value)
-        angle_list=[]
-        b_list=[]
-        if linesP is not None:
-            for i in range(0, len(linesP)):
-                # rospy.loginfo(linesP)
-                # rospy.loginfo(type(linesP))
-                # rospy.loginfo(linesP.shape)
-                l = linesP[i][0]
-                angle = np.arctan((l[3]-l[1]) /(l[2]-l[0])) *180/np.pi
-                # b_list.append(((-l[1]+720)-slope*l[0])/100)
-                b_list.append(l[1]- ((l[0]/(l[2]-l[0]))*(l[3]-l[1])) )
-                angle_list.append(angle)
-                r = np.random.randint(256)
-                g = np.random.randint(256)
-                b = np.random.randint(256)
-                cv2.line(cdstP, (l[0], l[1]), (l[2], l[3]), (r,g,b), 2, cv2.LINE_AA)
+        try:
+            linesP = cv2.HoughLinesP(thinned_im, 1, np.pi / 180, hough_tresh, None,minLineLength=minLineLength_value,maxLineGap=maxLineGap_value)
+            angle_list=[]
+            b_list=[]
+            if linesP is not None:
+                for i in range(0, len(linesP)):
+                    # rospy.loginfo(linesP)
+                    # rospy.loginfo(type(linesP))
+                    # rospy.loginfo(linesP.shape)
+                    l = linesP[i][0]
+                    angle = np.arctan((l[3]-l[1]) /(l[2]-l[0])) *180/np.pi
+                    # b_list.append(((-l[1]+720)-slope*l[0])/100)
+                    b_list.append(l[1]- ((l[0]/(l[2]-l[0]))*(l[3]-l[1])))
+                    angle_list.append(angle)
+                    r = np.random.randint(256)
+                    g = np.random.randint(256)
+                    b = np.random.randint(256)
+                    cv2.line(cdstP, (l[0], l[1]), (l[2], l[3]), (r,g,b), 2, cv2.LINE_AA)
 
-        # cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
-        # cv2.waitKey(0)
-        angle_list = np.round(np.array(angle_list),1)
-        b_list = np.array(b_list)
-        lines_list = np.round(np.array([b_list,angle_list]),1)
+            # cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
+            # cv2.waitKey(0)
+            angle_list = np.round(np.array(angle_list),1)
+            b_list = np.array(b_list)
+            lines_list = np.round(np.array([b_list,angle_list]),1)
 
-        #normalizing list for data analysis, probably unuseful
-        # b_list_norm = (b_list-np.min(b_list))/(np.max(b_list)-np.min(b_list))
-        # angle_list_norm = (angle_list-np.min(angle_list))/(np.max(angle_list)-np.min(angle_list))
-        # lines_list_norm = np.round(np.array([np.array(b_list_norm),np.array(angle_list_norm)]),2)
-        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            #normalizing list for data analysis, probably unuseful
+            # b_list_norm = (b_list-np.min(b_list))/(np.max(b_list)-np.min(b_list))
+            # angle_list_norm = (angle_list-np.min(angle_list))/(np.max(angle_list)-np.min(angle_list))
+            # lines_list_norm = np.round(np.array([np.array(b_list_norm),np.array(angle_list_norm)]),2)
+            # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
-        #### removing outliers and 0 or 90 degrees lines
-        # removing zeros and 90 degrees
-        # zeros_index = np.squeeze(np.array(np.where(lines_list[1,:] == 0))) # find idx of zero slope
-        # ninety_index = np.squeeze(np.array(np.where(lines_list[1,:] == 90))) # find idx of 90 slope
-        #
-        # if zeros_index is not None:
-        #     lines_list = np.delete(lines_list, zeros_index,1)
-        #
-        # if ninety_index is not None:
-        #     lines_list = np.delete(lines_list, ninety_index,1)
+            #### removing outliers and 0 or 90 degrees lines
+            # removing zeros and 90 degrees
+            # zeros_index = np.squeeze(np.array(np.where(lines_list[1,:] == 0))) # find idx of zero slope
+            # ninety_index = np.squeeze(np.array(np.where(lines_list[1,:] == 90))) # find idx of 90 slope
+            #
+            # if zeros_index is not None:
+            #     lines_list = np.delete(lines_list, zeros_index,1)
+            #
+            # if ninety_index is not None:
+            #     lines_list = np.delete(lines_list, ninety_index,1)
 
-        ################# at the end no classification was made. Ask Ivan.
+            ################# at the end no classification was made. Ask Ivan.
 
-        # angle_distance_matrix = np.triu(np.round(np.abs(angle_list.T[:, None] - angle_list[None, :]),1))
-        # rospy.loginfo(angle_distance_matrix)
-        # ninety_degree_lines_idxs = np.where(((angle_distance_matrix<91) & (angle_distance_matrix>70)))
-        # rospy.loginfo(ninety_degree_lines_idxs)
+            # angle_distance_matrix = np.triu(np.round(np.abs(angle_list.T[:, None] - angle_list[None, :]),1))
+            # rospy.loginfo(angle_distance_matrix)
+            # ninety_degree_lines_idxs = np.where(((angle_distance_matrix<91) & (angle_distance_matrix>70)))
+            # rospy.loginfo(ninety_degree_lines_idxs)
 
-        # ninety_degree_lines_idx=np.unique(ninety_degree_lines_idxs[0])
-        # rospy.loginfo(ninety_degree_lines_idx)
+            # ninety_degree_lines_idx=np.unique(ninety_degree_lines_idxs[0])
+            # rospy.loginfo(ninety_degree_lines_idx)
 
-        # chosen_lines = lines_list[:,ninety_degree_lines_idx] # Uncomment for classification
-        chosen_lines = lines_list[:,:]
-        # rospy.loginfo(chosen_lines)
-
-
-        chosen_lines_im_thinned = cv2.cvtColor(thinned_im, cv2.COLOR_GRAY2BGR)
-        only_cables_image = np.zeros((depth_image_rect.height,depth_image_rect.width,3), np.uint8)
+            # chosen_lines = lines_list[:,ninety_degree_lines_idx] # Uncomment for classification
+            chosen_lines = lines_list[:,:]
+            # rospy.loginfo(chosen_lines)
 
 
-        if chosen_lines is not None:
-            for i in range(0, len(chosen_lines[0])):
-                r = np.random.randint(256)
-                g = np.random.randint(256)
-                b = np.random.randint(256)
-                u1 = 0
-                v1 = int(chosen_lines[0,i])
-                u2 = 1280
-                v2 = int(u2*np.tan(chosen_lines[1,i]*np.pi/180)+chosen_lines[0,i])
-                cv2.line(chosen_lines_im_thinned, (u1, v1), (u2, v2), (r,g,b), 2, cv2.LINE_AA)
-                cv2.line(only_cables_image, (u1, v1), (u2, v2), (255,255,255), 2, cv2.LINE_AA)
+            chosen_lines_im_thinned = cv2.cvtColor(thinned_im, cv2.COLOR_GRAY2BGR)
+            only_cables_image = np.zeros((depth_image_rect.height,depth_image_rect.width,3), np.uint8)
+
+
+            if chosen_lines is not None:
+                for i in range(0, len(chosen_lines[0])):
+                    r = np.random.randint(256)
+                    g = np.random.randint(256)
+                    b = np.random.randint(256)
+                    u1 = 0
+                    v1 = int(chosen_lines[0,i])
+                    u2 = 1280
+                    v2 = int(u2*np.tan(chosen_lines[1,i]*np.pi/180)+chosen_lines[0,i])
+                    cv2.line(chosen_lines_im_thinned, (u1, v1), (u2, v2), (r,g,b), 2, cv2.LINE_AA)
+                    cv2.line(only_cables_image, (u1, v1), (u2, v2), (255,255,255), 2, cv2.LINE_AA)
 
 
 
-        # checkpoint_hough = str((time.time() - start_time)) # 0.1
-        # rospy.loginfo("all hough transforms times:")
-        # rospy.loginfo(checkpoint_hough)
+            # checkpoint_hough = str((time.time() - start_time)) # 0.1
+            # rospy.loginfo("all hough transforms times:")
+            # rospy.loginfo(checkpoint_hough)
 
-        ##########################3 PLT PLOT
-        # Set the figure size
-        # plt.figure("data")
-        # plt.scatter(lines_list[0,:],lines_list[1,:])
-        # plt.xlabel('b')
-        # plt.ylabel('angle')
-        # plt.grid()
+            ##########################3 PLT PLOT
+            # Set the figure size
+            # plt.figure("data")
+            # plt.scatter(lines_list[0,:],lines_list[1,:])
+            # plt.xlabel('b')
+            # plt.ylabel('angle')
+            # plt.grid()
 
-        # plt.figure("normalized_data")
-        # plt.scatter(lines_list_norm[0,:],lines_list_norm[1,:])
-        # plt.xlabel('b_normalized')
-        # plt.ylabel('angle_normalized')
-        # plt.grid()
-        # plt.figure("image_reference")
-        # plt.imshow(cdstP)
-        # plt.figure("image_reference_chosen_lines")
-        # plt.imshow(chosen_lines_im_thinned)
-
-
-        # cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
-        # rospy.loginfo("histogram part")
-        # plt.figure("histogram")
-        # angle_list_sorted=np.sort(angle_list)
-        # hist,bins = np.histogram(angle_list_sorted)
-        # rospy.loginfo(hist)
-        # rospy.loginfo(bins)
-        # rospy.loginfo(angle_list_sorted)
-        # plt.bars(hist, bins)
-
-        # plt.show()
-
-        ############### Only cables processing
-        only_cables_gray_image = cv2.cvtColor(only_cables_image, cv2.COLOR_RGB2GRAY)
-        th, binarized_only_cables_im = cv2.threshold(only_cables_gray_image, 128, 255, cv2.THRESH_BINARY_INV)
-        th, binarized_only_cables_im_plane = cv2.threshold(only_cables_gray_image, 128, 255, cv2.THRESH_BINARY)
-        cv2.imshow("binarized_only_cables_im", binarized_only_cables_im)
-        # print(type(binarized_only_cables_im))
-        binarized_only_cables_im.dtype='bool'
-        # rospy.loginfo(binarized_only_cables_im)
-        # rospy.loginfo(type(binarized_only_cables_im))
-        # rospy.loginfo(binarized_only_cables_im.shape)
-        # rospy.loginfo(type(depth_image_rect_copy_cables))
-        # rospy.loginfo(depth_image_rect_copy_cables.shape)
-        # cv2.waitKey(0)
-
-        depth_image_rect_copy_cables[binarized_only_cables_im]=0
-        # rospy.loginfo(type(depth_image_rect_copy_cables))
-        # rospy.loginfo(depth_image_rect_copy_cables.shape)
-
-        ##############3 i need to create a plane on which the lines are staying.
-        ################# select only close distance points
-
-        plane_points_generators=np.copy(depth_image_rect_copy_cables)
-        plane_points_generators[plane_points_generators[:,:] < 400]=0
-        plane_points_generators[plane_points_generators[:,:] > 1200]=0 # its millimiters!
-        # print(plane_points_generators.mean())
-        # print(plane_points_generators.shape)
-        # print(np.count_nonzero(plane_points_generators))
-        # print(type(plane_points_generators))
-
-        # checkpoint_cleaning = str((time.time() - start_time)) # 0.1
-        # rospy.loginfo("all cleaning  times:")
-        # rospy.loginfo(checkpoint_cleaning)
-
-        plane_thresh_im=np.copy(plane_points_generators)
-
-        #fake depth image for plane creation
-
-        fake_image = np.zeros(shape=(720,1280,3))
-        fake_image[:,:,0]=self.u
-        fake_image[:,:,1]=self.v
-        fake_image[:,:,2]= plane_points_generators
-        fake_image_vector=np.reshape(fake_image,(1280*720,3))
-        fake_image_vector = fake_image_vector[np.all(fake_image_vector != 0, axis=1)]
-
-        # checkpoint_fake_img = str((time.time() - start_time))
-        # rospy.loginfo("checkpoint_fake_img:")
-        # rospy.loginfo(checkpoint_fake_img)
-
-        # randomly reducing vector size
-        remove_idx= np.random.randint(0,fake_image_vector.shape[0],int(fake_image_vector.shape[0]*0.9)) # removing 0.n% of data
-        fake_image_vector=np.delete(fake_image_vector, remove_idx, axis=0)
-
-        # creating plane
-        points = Points(fake_image_vector)
-        plane = Plane.best_fit(points)
-        # rospy.logerr(plane)
-        # plot_3d(
-        #     points.plotter(c='k', s=5, depthshade=False),
-        #     plane.plotter(alpha=0.2, lims_x=(-500, 1000), lims_y=(-500, 1000)
-        #     ))
-        # plt.show()
-
-        # checkpoint_plane_fit = str((time.time() - start_time))
-        # rospy.loginfo("checkpoint_plane_fit:")
-        # rospy.loginfo(checkpoint_plane_fit)
-
-        #fake image for cable reconstruction
-        binarized_only_cables_im_plane
-        fake_image_reco = np.zeros(shape=(720,1280,4))
-        fake_image_reco[:,:,0]=self.u
-        fake_image_reco[:,:,1]=self.v
-        fake_image_reco[:,:,2]= binarized_only_cables_im_plane # this are 255 values
-        fake_image_reco[:,:,3]=1
-        fake_image_reco_vector=np.reshape(fake_image_reco,(1280*720,4))
-        ordering_vector_idx=np.arange(0,fake_image_reco_vector.shape[0]) # used later for reconstructing image
-        fake_image_reco_vector[:,3]= ordering_vector_idx
-
-        fake_image_reco_vector_clear = fake_image_reco_vector[np.all(fake_image_reco_vector != 0, axis=1)] # removes rows with 0
+            # plt.figure("normalized_data")
+            # plt.scatter(lines_list_norm[0,:],lines_list_norm[1,:])
+            # plt.xlabel('b_normalized')
+            # plt.ylabel('angle_normalized')
+            # plt.grid()
+            # plt.figure("image_reference")
+            # plt.imshow(cdstP)
+            # plt.figure("image_reference_chosen_lines")
+            # plt.imshow(chosen_lines_im_thinned)
 
 
-        # z = z1 + (a(x-x1)+b(y-y1))/c Adding new depths
-        x1 = plane.point[0]
-        y1 = plane.point[1]
-        z1 = plane.point[2]
-        a = plane.normal[0]
-        b = plane.normal[1]
-        c = plane.normal[2]
-        new_z_cables =z1 + -(a*(fake_image_reco_vector_clear[:,0]-x1)+b*(fake_image_reco_vector_clear[:,1]-y1))/c
-        fake_image_reco_vector_clear[:,2]=new_z_cables
+            # cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
+            # rospy.loginfo("histogram part")
+            # plt.figure("histogram")
+            # angle_list_sorted=np.sort(angle_list)
+            # hist,bins = np.histogram(angle_list_sorted)
+            # rospy.loginfo(hist)
+            # rospy.loginfo(bins)
+            # rospy.loginfo(angle_list_sorted)
+            # plt.bars(hist, bins)
 
-        # removing values that have been changed from fake image
-        fake_image_reco_vector=np.delete(fake_image_reco_vector,fake_image_reco_vector_clear[:,3].astype('int'),axis=0)
-        # adding new vector
-        fake_image_reco_vector=np.concatenate((fake_image_reco_vector, fake_image_reco_vector_clear), axis=0) # adding cables on plane
-        # ordering per idx
-        fake_image_reco_vector=fake_image_reco_vector[fake_image_reco_vector[:, 3].argsort()] # sorting by index
-        fake_image_reco=np.reshape(fake_image_reco_vector,(720,1280,4))# reshaping back into fake image
-        cables_on_plane_depth= np.round(fake_image_reco[:,:,2].astype('uint16'))
+            # plt.show()
+
+            ############### Only cables processing
+            only_cables_gray_image = cv2.cvtColor(only_cables_image, cv2.COLOR_RGB2GRAY)
+            th, binarized_only_cables_im = cv2.threshold(only_cables_gray_image, 128, 255, cv2.THRESH_BINARY_INV)
+            th, binarized_only_cables_im_plane = cv2.threshold(only_cables_gray_image, 128, 255, cv2.THRESH_BINARY)
+            cv2.imshow("binarized_only_cables_im", binarized_only_cables_im)
+            # print(type(binarized_only_cables_im))
+            binarized_only_cables_im.dtype='bool'
+            # rospy.loginfo(binarized_only_cables_im)
+            # rospy.loginfo(type(binarized_only_cables_im))
+            # rospy.loginfo(binarized_only_cables_im.shape)
+            # rospy.loginfo(type(depth_image_rect_copy_cables))
+            # rospy.loginfo(depth_image_rect_copy_cables.shape)
+            # cv2.waitKey(0)
+
+            depth_image_rect_copy_cables[binarized_only_cables_im]=0
+            # rospy.loginfo(type(depth_image_rect_copy_cables))
+            # rospy.loginfo(depth_image_rect_copy_cables.shape)
+
+            ##############3 i need to create a plane on which the lines are staying.
+            ################# select only close distance points
+
+            plane_points_generators=np.copy(depth_image_rect_copy_cables)
+            plane_points_generators[plane_points_generators[:,:] < 400]=0
+            plane_points_generators[plane_points_generators[:,:] > 1200]=0 # its millimiters!
+            # print(plane_points_generators.mean())
+            # print(plane_points_generators.shape)
+            # print(np.count_nonzero(plane_points_generators))
+            # print(type(plane_points_generators))
+
+            # checkpoint_cleaning = str((time.time() - start_time)) # 0.1
+            # rospy.loginfo("all cleaning  times:")
+            # rospy.loginfo(checkpoint_cleaning)
+
+            plane_thresh_im=np.copy(plane_points_generators)
+
+            #fake depth image for plane creation
+
+            fake_image = np.zeros(shape=(720,1280,3))
+            fake_image[:,:,0]=self.u
+            fake_image[:,:,1]=self.v
+            fake_image[:,:,2]= plane_points_generators
+            fake_image_vector=np.reshape(fake_image,(1280*720,3))
+
+            # fake_image_vector = fake_image_vector[np.all(fake_image_vector[:,2] != 0, axis=1)]
+            fake_image_vector = fake_image_vector[(fake_image_vector[:,2] != 0)] #removing depth rows =0
+
+            # checkpoint_fake_img = str((time.time() - start_time))
+            # rospy.loginfo("checkpoint_fake_img:")
+            # rospy.loginfo(checkpoint_fake_img)
+
+            # randomly reducing vector size
+            remove_idx= np.random.randint(0,fake_image_vector.shape[0],int(fake_image_vector.shape[0]*0.5)) # removing 0.n% of data
+            fake_image_vector=np.delete(fake_image_vector, remove_idx, axis=0)
+            #clearing distance with percentile
+            # number_of_points=fake_image_vector.shape[0]
+            # rospy.logerr(fake_image_vector)
+            # rospy.logerr(fake_image_vector.shape)
+            # mediana_z_clean = np.median(fake_image_reco_vector[:,2],)
+            clear_idx= ((fake_image_vector[:,2]>np.percentile(fake_image_vector[:,2],30)) & (fake_image_vector[:,2]<np.percentile(fake_image_vector[:,2],70)))
+            # rospy.logerr(clear_idx)
+            # rospy.logerr(clear_idx.shape)
+            fake_image_vector=fake_image_vector[clear_idx,:]
+            # rospy.logerr(fake_image_vector)
+            # rospy.logerr(fake_image_vector.shape)
+            # creating plane
+            points = Points(fake_image_vector)
+            plane = Plane.best_fit(points)
+            # rospy.logerr(plane)
+            # plot_3d(
+            #     points.plotter(c='k', s=1, depthshade=False),
+            #     plane.plotter(alpha=0.2, lims_x=(-500, 1000), lims_y=(-500, 1000)
+            #     ))
+            # plt.show()
+
+            # checkpoint_plane_fit = str((time.time() - start_time))
+            # rospy.loginfo("checkpoint_plane_fit:")
+            # rospy.loginfo(checkpoint_plane_fit)
+
+            #fake image for cable reconstruction
+            fake_image_reco = np.zeros(shape=(720,1280,4))
+            fake_image_reco[:,:,0]=self.u
+            fake_image_reco[:,:,1]=self.v
+            fake_image_reco[:,:,2]= binarized_only_cables_im_plane # this are 255 values
+            fake_image_reco[:,:,3]=1
+            fake_image_reco_vector=np.reshape(fake_image_reco,(1280*720,4))
+            ordering_vector_idx=np.arange(0,fake_image_reco_vector.shape[0]) # used later for reconstructing image
+            fake_image_reco_vector[:,3]= ordering_vector_idx
+
+            fake_image_reco_vector_clear = fake_image_reco_vector[(fake_image_reco_vector[:,2] != 0)] # removes depth rows with 0
+
+
+            # z = z1 + (a(x-x1)+b(y-y1))/c Adding new depths
+            x1 = plane.point[0]
+            y1 = plane.point[1]
+            z1 = plane.point[2]
+            a = plane.normal[0]
+            b = plane.normal[1]
+            c = plane.normal[2]
+            rospy.logerr(plane)
+            new_z_cables = z1 -(a*(fake_image_reco_vector_clear[:,0]-x1)+b*(fake_image_reco_vector_clear[:,1]-y1))/c
+            fake_image_reco_vector_clear[:,2]=new_z_cables
+
+
+
+            # removing values that have been changed from fake image
+            fake_image_reco_vector=np.delete(fake_image_reco_vector,fake_image_reco_vector_clear[:,3].astype('int'),axis=0)
+            # adding new vector
+            fake_image_reco_vector=np.concatenate((fake_image_reco_vector, fake_image_reco_vector_clear), axis=0) # adding cables on plane
+            # ordering per idx
+            fake_image_reco_vector=fake_image_reco_vector[fake_image_reco_vector[:, 3].argsort()] # sorting by index
+            fake_image_reco=np.reshape(fake_image_reco_vector,(720,1280,4))# reshaping back into fake image
+            cables_on_plane_depth= np.round(fake_image_reco[:,:,2].astype('uint16'))
+            #
+            # fig = plt.figure(num=1)
+            # ax = fig.add_subplot(projection='3d')
+            # # ax.set_xlabel('X Label')
+            # # ax.set_ylabel('Y Label')
+            # # ax.set_zlabel('Z Label')
+            # # remove_idx= np.random.randint(0,fake_image_reco_vector_clear.shape[0],int(fake_image_reco_vector_clear.shape[0]*0.999)) # removing 0.n% of data
+            # # fake_image_reco_vector_clear=np.delete(fake_image_reco_vector_clear, remove_idx, axis=0)
+            # # ax.scatter(fake_image_reco_vector_clear[:,0], fake_image_reco_vector_clear[:,1], fake_image_reco_vector_clear[:,2],s=0.2)
+            #
+            # plot_points=fake_image_reco_vector[:,[0,1,2]]
+            # new_z=np.reshape(cables_on_plane_depth,(1280*720,))
+            # plot_points[:,2]=new_z
+            # remove_idx= np.random.randint(0,plot_points.shape[0],int(plot_points.shape[0]*0.9999)) # removing 0.n% of data
+            # plot_points=np.delete(plot_points, remove_idx, axis=0)
+            # # new_z= np.reshape(cables_on_plane_depth,(1280*720,1))
+            # points = Points(plot_points)
+            # points.plot_3d(ax,c='k', s=0.01, depthshade=False)
+            # plane.plot_3d(ax,alpha=0.2, lims_x=(-1000, 1000), lims_y=(-1000, 1000))
+            # plt.pause(0.001)
+        except:
+            rospy.logwarn("no cables detected!")
+            fake_image_reco = np.zeros(shape=(720,1280))
+            cables_on_plane_depth= np.round(fake_image_reco.astype('uint16'))
+
         #
         # checkpoint_planes = str((time.time() - start_time))
         # rospy.loginfo("all planes  times:")
@@ -379,6 +420,8 @@ class cable_preprocesser(object):
         self.imgmsg_depth_cables.encoding="16UC1"
         # self.imgmsg_depth.step=len(self.imgmsg_depth.data) // self.imgmsg_depth.height
         self.depth_cables_pub.publish(self.imgmsg_depth_cables)
+
+
 
         # checkpoint_end = str((time.time() - start_time))
         # rospy.loginfo("time:")
