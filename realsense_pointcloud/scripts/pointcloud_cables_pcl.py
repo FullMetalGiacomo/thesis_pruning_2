@@ -29,7 +29,6 @@ from skspatial.plotting import plot_3d
 from numpy.linalg import multi_dot
 
 from sensor_msgs import point_cloud2
-# from ros_numpy import point_cloud2
 
 # roslaunch realsense2_camera rs_camera.launch align_depth:=true mode:=manualcolor_fps:=15 color_width:=1280 color_height:=720 depth_fps:=15 depth_width:=1280 depth_height:=720 enable_pointcloud:=True flters:=spatial,temporal,hole_filling,decimation,disparity
 
@@ -332,110 +331,162 @@ class cable_preprocesser(object):
         reco_vector_pcl[:,0]=(fake_image_vector[:,2]/self.K[0])*(fake_image_vector[:,0]-self.K[2])
         reco_vector_pcl[:,1]=(fake_image_vector[:,2]/self.K[4])*(fake_image_vector[:,1]-self.K[5])
         reco_vector_pcl[:,2]=fake_image_vector[:,2]
-        rospy.loginfo(reco_vector_pcl)
-        rospy.logerr(reco_vector_pcl.shape)
+        # rospy.loginfo(reco_vector_pcl)
+        # rospy.logerr(reco_vector_pcl.shape)
         # creating plane
         points = Points(reco_vector_pcl)
         plane = Plane.best_fit(points)
-        rospy.logerr(plane)
+        # rospy.logerr(plane)
+        # fig = plt.figure(num=1)
+        # ax = fig.add_subplot(projection='3d')
+        # # ax.set_xlabel('X Label')
+        # # ax.set_ylabel('Y Label')
+        # # ax.set_zlabel('Z Label')
+        # # remove_idx= np.random.randint(0,fake_image_reco_vector_clear.shape[0],int(fake_image_reco_vector_clear.shape[0]*0.999)) # removing 0.n% of data
+        # # fake_image_reco_vector_clear=np.delete(fake_image_reco_vector_clear, remove_idx, axis=0)
+        # # ax.scatter(fake_image_reco_vector_clear[:,0], fake_image_reco_vector_clear[:,1], fake_image_reco_vector_clear[:,2],s=0.2)
+        # # new_z= np.reshape(cables_on_plane_depth,(1280*720,1))
+        # # points = Points(reco_vector_pcl)
+        # points.plot_3d(ax,c='k', s=0.01, depthshade=False)
+        # plane.plot_3d(ax,alpha=0.2, lims_x=(-800, 800), lims_y=(-800, 800))
+        # plt.pause(0.001)
+        ######################33 if the points are too dispersed wrt to plane we don't want to find the lines
+        test_points=np.copy(reco_vector_pcl) ## moving points to center and find the reference frame of plane ( z = normal plane)
+        test_points[:,0]=test_points[:,0]-plane.point[0]
+        test_points[:,1]=test_points[:,1]-plane.point[1]
+        test_points[:,2]=test_points[:,2]-plane.point[2]
+        u1=np.cross(plane.normal,[0,0,1]) # first vector orthogonal to normal
+        u1=u1/np.linalg.norm(u1) # normalizing
+        u2=np.cross(plane.normal,u1)# second vector orthogonal to normal
+        rospy.logerr(plane.normal)
+        R=np.array([(u1),(u2),(plane.normal)]) # rotational matrix of the plane
+        rospy.logerr(R.shape)
+        rospy.logerr(test_points.shape)
+        rotated_test_points=np.dot(R,test_points.T)
+        rospy.logerr(rotated_test_points)
+        rospy.logerr(test_points)
+        rospy.logerr(rotated_test_points.shape)
+        x_variance_transformed=np.var(rotated_test_points[0,:]/1000)
+        y_variance_transformed=np.var(rotated_test_points[1,:]/1000)
+        z_variance_transformed=np.var(rotated_test_points[2,:]/1000)
+        magnitude_variance_transformed=np.linalg.norm([x_variance_transformed,y_variance_transformed,z_variance_transformed])
 
-        ################################## Testing Algorithm
-        # lines_borders_pixels u1 v1 u2 v2
-        xy_coord_list=[]
-        lines_borders_pixels=np.reshape(lines_borders_pixels,(lines_borders_pixels.shape[0]*2,2))
-        rospy.loginfo(lines_borders_pixels) #u1v1,u2v2,u3v3,...
-        x0 = plane.point[0]
-        y0 = plane.point[1]
-        z0 = plane.point[2]
-        a = plane.normal[0]
-        b = plane.normal[1]
-        c = plane.normal[2]
+        rospy.loginfo("rotated variances xyz")
+        # rospy.loginfo(x_variance_transformed)
+        # rospy.loginfo(y_variance_transformed)
+        rospy.loginfo(z_variance_transformed)
+        # rospy.loginfo(magnitude_variance_transformed)
 
-        for i in range(len(lines_borders_pixels)):
+        x_variance=np.var(test_points[:,0]/1000)
+        y_variance=np.var(test_points[:,1]/1000)
+        z_variance=np.var(test_points[:,2]/1000)
+        magnitude_variance=np.linalg.norm([x_variance,y_variance,z_variance])
 
-            u1=lines_borders_pixels[i,0]
-            v1=lines_borders_pixels[i,1]
+        rospy.loginfo(" variances xyz")
+        # rospy.loginfo(x_variance)
+        # rospy.loginfo(y_variance)
+        rospy.loginfo(z_variance)
+        # rospy.loginfo(magnitude_variance)
 
+        if z_variance>0.0030:
+            rospy.logerr("could not create plane, points too dispersed")
+        else:
+            ################################## Testing Algorithm
+            # lines_borders_pixels u1 v1 u2 v2
+            xy_coord_list=[]
+            lines_borders_pixels=np.reshape(lines_borders_pixels,(lines_borders_pixels.shape[0]*2,2))
+            # rospy.loginfo(lines_borders_pixels) #u1v1,u2v2,u3v3,...
+            x0 = plane.point[0]
+            y0 = plane.point[1]
+            z0 = plane.point[2]
+            a = plane.normal[0]
+            b = plane.normal[1]
+            c = plane.normal[2]
 
-            A11=-a*(u1-self.K[2])/(self.K[0]*c)
-            A12=-b*(u1-self.K[2])/(self.K[0]*c)
-            A21=-a*(v1-self.K[5])/(self.K[4]*c)
-            A22=-b*(v1-self.K[5])/(self.K[4]*c)
-            A=np.matrix(np.array([[A11,A12],[A21,A22]]))
-            I=np.matrix(np.identity(2))
+            for i in range(len(lines_borders_pixels)):
 
-            B11=-A11
-            B12=-A12
-            B13=(u1-self.K[2])/self.K[0]
-            B21=-A21
-            B22=-A22
-            B23=(v1-self.K[5])/self.K[4]
-            B=np.matrix(np.array([[B11,B12,B13],[B21,B22,B23]]))
-            P=np.matrix(np.array([[x0],[y0],[z0]]))
-            # rospy.logerr("AAAAAAAAAAAAAAAAAAAAAAAAAAA")
-            # rospy.logwarn(A.A)
-            # rospy.logwarn(B.A)
-            A_I_inv=np.matrix(I.A-A.A).I
-            # rospy.logwarn(A_I_inv.A)
-            x_vector=multi_dot([A_I_inv.A, B.A, P.A])
-            # rospy.loginfo(P.A)
-            # rospy.logwarn(x_vector)
-            # rospy.logwarn(np.array(x_vector).shape)
-            xy_coord_list.append(x_vector.T)
-
-        xy_coord_list=np.array(xy_coord_list) # contains xy
-        xy_coord_list=np.reshape(xy_coord_list,(xy_coord_list.shape[0],2))
-
-
-        xyz_coord_list=np.zeros(shape=(xy_coord_list.shape[0],3)) # contains xyz (n,xyz)
-        xyz_coord_list[:,0]=xy_coord_list[:,0]
-        xyz_coord_list[:,1]=xy_coord_list[:,1]
-        xyz_coord_list[:,2]=z0+(x0-xy_coord_list[:,0])*a/c+(y0-xy_coord_list[:,1])*b/c
-
-        # rospy.logwarn(xyz_coord_list)
-        xyz_coord_list=np.reshape(xyz_coord_list,(int(xyz_coord_list.shape[0]*0.5),6)) #contains x1y1z1 x2y2z2 (xyz,xyz)
-        # rospy.logwarn(xyz_coord_list)
-
-        ###################################3 find 3d lines
-        # direction_ratios!
-        lmn=np.zeros(shape=((xyz_coord_list.shape[0],3)))
-        lmn[:,0]=(xyz_coord_list[:,3]-xyz_coord_list[:,0])
-        lmn[:,1]=(xyz_coord_list[:,4]-xyz_coord_list[:,1])
-        lmn[:,2]=(xyz_coord_list[:,5]-xyz_coord_list[:,2])
-        rospy.logwarn(lmn)
-
-        number_of_points_per_line=500
-        x=np.linspace(-700,700,number_of_points_per_line)
-        cloud_array=[]
-        holder_xyz_lines=np.zeros(shape=(number_of_points_per_line,3))
-        holder_xyz_lines[:,0]=x
-        for j in range (len(lmn)):
-            y=(lmn[j,1]*(x-xyz_coord_list[j,0]))/lmn[j,0]+xyz_coord_list[j,1]
-            z=(lmn[j,2]*(x-xyz_coord_list[j,0]))/lmn[j,0]+xyz_coord_list[j,2]
-            holder_xyz_lines[:,1]=y
-            holder_xyz_lines[:,2]=z
-            cloud_array.append(np.array(holder_xyz_lines))
-
-        cloud_array=np.array(cloud_array)/1000 # back to meters
-        # rospy.logerr(cloud_array)
+                u1=lines_borders_pixels[i,0]
+                v1=lines_borders_pixels[i,1]
 
 
-        # rospy.logwarn(cloud_array.shape)
-        # rospy.logwarn(cloud_array)
-        cloud_array=np.reshape(cloud_array,(int(cloud_array.shape[0]*number_of_points_per_line),3))
-        cloud_array=cloud_array[(cloud_array[:,1]>-0.7)&(cloud_array[:,1]<0.7)]
-        # rospy.logwarn(cloud_array.shape)
-        # rospy.logwarn(cloud_array)
-        # points = Points(cloud_array)
+                A11=-a*(u1-self.K[2])/(self.K[0]*c)
+                A12=-b*(u1-self.K[2])/(self.K[0]*c)
+                A21=-a*(v1-self.K[5])/(self.K[4]*c)
+                A22=-b*(v1-self.K[5])/(self.K[4]*c)
+                A=np.matrix(np.array([[A11,A12],[A21,A22]]))
+                I=np.matrix(np.identity(2))
 
-        # plot_3d(
-        #     points.plotter(c='k', s=1, depthshade=False),
-        #     plane.plotter(alpha=0.2, lims_x=(-500, 1000), lims_y=(-500, 1000)
-        #     ))
-        # plt.show()
+                B11=-A11
+                B12=-A12
+                B13=(u1-self.K[2])/self.K[0]
+                B21=-A21
+                B22=-A22
+                B23=(v1-self.K[5])/self.K[4]
+                B=np.matrix(np.array([[B11,B12,B13],[B21,B22,B23]]))
+                P=np.matrix(np.array([[x0],[y0],[z0]]))
+                # rospy.logwarn(A.A)
+                # rospy.logwarn(B.A)
+                A_I_inv=np.matrix(I.A-A.A).I
+                # rospy.logwarn(A_I_inv.A)
+                x_vector=multi_dot([A_I_inv.A, B.A, P.A])
+                # rospy.loginfo(P.A)
+                # rospy.logwarn(x_vector)
+                # rospy.logwarn(np.array(x_vector).shape)
+                xy_coord_list.append(x_vector.T)
 
-        ###################  tranforming to PointCloud2 msg
-        my_node.publishPC2(cloud_array,depth_image_rect)
+            xy_coord_list=np.array(xy_coord_list) # contains xy
+            xy_coord_list=np.reshape(xy_coord_list,(xy_coord_list.shape[0],2))
+
+
+            xyz_coord_list=np.zeros(shape=(xy_coord_list.shape[0],3)) # contains xyz (n,xyz)
+            xyz_coord_list[:,0]=xy_coord_list[:,0]
+            xyz_coord_list[:,1]=xy_coord_list[:,1]
+            xyz_coord_list[:,2]=z0+(x0-xy_coord_list[:,0])*a/c+(y0-xy_coord_list[:,1])*b/c
+
+            # rospy.logwarn(xyz_coord_list)
+            xyz_coord_list=np.reshape(xyz_coord_list,(int(xyz_coord_list.shape[0]*0.5),6)) #contains x1y1z1 x2y2z2 (xyz,xyz)
+            # rospy.logwarn(xyz_coord_list)
+
+            ###################################3 find 3d lines
+            # direction_ratios!
+            lmn=np.zeros(shape=((xyz_coord_list.shape[0],3)))
+            lmn[:,0]=(xyz_coord_list[:,3]-xyz_coord_list[:,0])
+            lmn[:,1]=(xyz_coord_list[:,4]-xyz_coord_list[:,1])
+            lmn[:,2]=(xyz_coord_list[:,5]-xyz_coord_list[:,2])
+            # rospy.logwarn(lmn)
+
+            number_of_points_per_line=500
+            x=np.linspace(-700,700,number_of_points_per_line)
+            cloud_array=[]
+            holder_xyz_lines=np.zeros(shape=(number_of_points_per_line,3))
+            holder_xyz_lines[:,0]=x
+            for j in range (len(lmn)): # building lines
+                y=(lmn[j,1]*(x-xyz_coord_list[j,0]))/lmn[j,0]+xyz_coord_list[j,1]
+                z=(lmn[j,2]*(x-xyz_coord_list[j,0]))/lmn[j,0]+xyz_coord_list[j,2]
+                holder_xyz_lines[:,1]=y
+                holder_xyz_lines[:,2]=z
+                cloud_array.append(np.array(holder_xyz_lines))
+
+            cloud_array=np.array(cloud_array)/1000 # from mm to meters
+            # rospy.logerr(cloud_array)
+
+
+            # rospy.logwarn(cloud_array.shape)
+            # rospy.logwarn(cloud_array)
+            cloud_array=np.reshape(cloud_array,(int(cloud_array.shape[0]*number_of_points_per_line),3))
+            cloud_array=cloud_array[(cloud_array[:,1]>-0.7)&(cloud_array[:,1]<0.7)] # cleaning upper and lower points
+            # rospy.logwarn(cloud_array.shape)
+            # rospy.logwarn(cloud_array)
+            # points = Points(cloud_array)
+
+            # plot_3d(
+            #     points.plotter(c='k', s=1, depthshade=False),
+            #     plane.plotter(alpha=0.2, lims_x=(-500, 1000), lims_y=(-500, 1000)
+            #     ))
+            # plt.show()
+
+            ###################  tranforming to PointCloud2 msg
+            my_node.publishPC2(cloud_array,depth_image_rect)
         # cloud_msg=my_node.array_to_pointcloud2(cloud_array,frame_id='camera_color_optical_frame')
         # self.pcl_cables_pub.publish(cloud_msg)
         # plot_3d(
@@ -506,7 +557,6 @@ class cable_preprocesser(object):
         # fake_image_reco=np.reshape(fake_image_reco_vector,(720,1280,4))# reshaping back into fake image
         # cables_on_plane_depth= np.round(fake_image_reco[:,:,2].astype('uint16'))
 
-        cables_on_plane_depth=np.zeros(shape=(720,1280)).astype('uint16')
         #
         # fig = plt.figure(num=1)
         # ax = fig.add_subplot(projection='3d')
@@ -560,13 +610,6 @@ class cable_preprocesser(object):
         # self.depth_map_pub.publish(self.imgmsg_depth)
         #
         # rospy.loginfo("before publishing")
-        self.imgmsg_depth_cables = self.bridge.cv2_to_imgmsg(cables_on_plane_depth, "16UC1")
-        self.imgmsg_depth_cables.header = depth_image_rect.header
-        self.imgmsg_depth_cables.height=depth_image_rect.height
-        self.imgmsg_depth_cables.width=depth_image_rect.width
-        self.imgmsg_depth_cables.encoding="16UC1"
-        # self.imgmsg_depth.step=len(self.imgmsg_depth.data) // self.imgmsg_depth.height
-        self.depth_cables_pub.publish(self.imgmsg_depth_cables)
 
 
 
