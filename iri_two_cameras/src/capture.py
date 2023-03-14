@@ -39,9 +39,9 @@ class Capture(object):
     def start(self):
         rospy.loginfo("Starting...")
         srv = Server(Reconfig_paramsConfig, self.recon_callback)
-        one = message_filters.Subscriber('/camera_1/color/image_raw', Image)
-        two = message_filters.Subscriber('/xtion/rgb/image_rect_color', Image)
-        ts = message_filters.ApproximateTimeSynchronizer([one, two],15,0.2)
+        one = message_filters.Subscriber('/camera_0/color/image_raw', Image)
+        two = message_filters.Subscriber('/camera_1/color/image_raw', Image)
+        ts = message_filters.ApproximateTimeSynchronizer([one, two],30,0.01)
         self.i=0
         ts.registerCallback(self.image_callback)
         r = rospy.Rate(15)

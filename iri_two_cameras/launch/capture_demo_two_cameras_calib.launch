@@ -4,10 +4,10 @@
     <arg name="serial_no" value="841512070858"/>
 
     <arg name="align_depth" value="True"/>
-    <arg name="color_fps" value="15"/>
+    <arg name="color_fps" value="30"/>
     <arg name="color_width" value="640"/>
     <arg name="color_height" value="480"/>
-    <arg name="depth_fps" value="15"/>
+    <arg name="depth_fps" value="30"/>
     <arg name="depth_width" value="640"/>
     <arg name="depth_height" value="480"/>
     <arg name="device_type" value="d435"/>
@@ -17,10 +17,10 @@
     <arg name="serial_no" value="831612071569"/>
 
     <arg name="align_depth" value="True"/>
-    <arg name="color_fps" value="15"/>
+    <arg name="color_fps" value="30"/>
     <arg name="color_width" value="640"/>
     <arg name="color_height" value="480"/>
-    <arg name="depth_fps" value="15"/>
+    <arg name="depth_fps" value="30"/>
     <arg name="depth_width" value="640"/>
     <arg name="depth_height" value="480"/>
     <arg name="device_type" value="d435"/>

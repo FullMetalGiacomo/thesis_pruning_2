@@ -39,12 +39,12 @@ void DynamicTransformPublisherAlgNode::mainNodeThread(void)
 
   this->alg_.lock();
   tf2::Transform tf_head_optical, tf_link_optical, tf_head_link, tf_wrist_optical, tf_wrist_link;
-  tf_head_optical.setOrigin(tf2::Vector3(-0.0098, -0.0843, 0.00092));
+  tf_head_optical.setOrigin(tf2::Vector3(-0.009523, -0.0844, -0.001));
   // tf_head_optical.translation.x = -0.0124;
   // tf_head_optical.translation.y = -0.0823;
   // tf_head_optical.translation.z = 0.01692;
   tf2::Quaternion q;
-  q.setRPY(-0.0137495, 0.0066511, 0.01099);
+  q.setRPY(-0.0053674, 0.0014389, 0.0107664);
   tf_head_optical.setRotation(q);
   // tf_head_optical.rotation.setRPY(0.0152272, 0.0283539, 0.0121376);
 
@@ -52,17 +52,17 @@ void DynamicTransformPublisherAlgNode::mainNodeThread(void)
   // tf_link_optical.translation.x= -0.001;
   // tf_link_optical.translation.y = 0.015;
   // tf_link_optical.translation.z = 0.0;
-  q.setRPY(-1.575, 0.007, -1.564);
+  q.setRPY(-1.575, -0.007, -1.564);
   // q.setRPY(-1.575, 0.008, -1.564);
 
   tf_link_optical.setRotation(q);
   // tf_link_optical.rotation.setRPY(-1.575, -0.008, -1.564);
 
-  tf_wrist_optical.setOrigin(tf2::Vector3(-0.017, -0.110, -0.113));
+  tf_wrist_optical.setOrigin(tf2::Vector3(-0.5111429185035584,-0.017166411063712826, 0.18685695388242043));
   // tf_wrist_optical.translation.x = 0.008;
   // tf_wrist_optical.translation.y = -0.097;
   // tf_wrist_optical.translation.z = -0.098;
-  q.setRPY(-3.112, 0.001, 3.116);
+  q.setRPY(0.03255, 0.4701, 0.02341);
   tf_wrist_optical.setRotation(q);
   // tf_wrist_optical.rotation.setRPY(3.124, -0.049, 3.138);
   geometry_msgs::Transform p;
@@ -73,9 +73,9 @@ void DynamicTransformPublisherAlgNode::mainNodeThread(void)
   // ROS_INFO_STREAM("TF HEAD CAMERA LINK");
   // p=tf2::toMsg(tf_head_link);
   // ROS_INFO_STREAM(p);
-  // ROS_INFO_STREAM("TF WRIST CAMERA LINK");
-  // p=tf2::toMsg(tf_wrist_link);
-  // ROS_INFO_STREAM(p);
+  ROS_INFO_STREAM("TF WRIST CAMERA LINK");
+  p=tf2::toMsg(tf_wrist_link);
+  ROS_INFO_STREAM(p);
 
 
 

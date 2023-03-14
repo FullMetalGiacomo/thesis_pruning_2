@@ -3,21 +3,20 @@ broadcast:    True
 parent_id:   'xtion_optical_frame'
 frame_id:    'camera_0_link'
 
-
-x:     0.0052118
-y:     -0.084231
-z:     0.001719
-roll:   0.9488132
-pitch: -1.5543316
-yaw:   0.6259723
+x:      0.00548461
+y:     -0.0843424
+z:      -0.000123439  
+roll:   1.4288749
+pitch: -1.5624883
+yaw:   0.1456844
 
 
 #parent_id:   'xtion_optical_frame'
 #frame_id:    'camera_0_color_optical_frame'
 
-#x:     -0.0098
-#y:     -0.0843
-#z:     0.00092
-#roll:   -0.0137495
-#pitch: 0.0066511
-#yaw:   0.01099
+#x:     -0.009523
+#y:     -0.0844
+#z:     -0.001
+#roll:   -0.0053674
+#pitch: 0.0014389
+#yaw:   0.0107664
