@@ -1,6 +1,15 @@
 rate: 15.0
 broadcast:    True
 
+parent_id:   'gripper_left_link'
+frame_id:    'camera_1_link'
+x:     -0.0325
+y:     -0.1032
+z:     -0.1032
+roll:  0.5937
+pitch: 1.5434
+yaw:   -0.9983
+
 #parent_id:   'gripper_left_link'
 #frame_id:    'camera_1_link'
 #x:     -0.0320037
@@ -23,16 +32,16 @@ broadcast:    True
 
 
 
-parent_id:   'camera_0_color_optical_frame'
-frame_id:    'camera_1_link'
+#parent_id:   'camera_0_color_optical_frame'
+#frame_id:    'camera_1_link'
 
-x:     -0.497362
-y:    -0.0167717
-z:     0.180863
+#x:     -0.497362
+#y:    -0.0167717
+#z:     0.180863
 
-roll:   1.649
-pitch: -1.093
-yaw:   -0.05642
+#roll:   1.649
+#pitch: -1.093
+#yaw:   -0.05642
 
 
 # " random positions "
