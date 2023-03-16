@@ -73,9 +73,9 @@ void DynamicTransformPublisherAlgNode::mainNodeThread(void)
   // ROS_INFO_STREAM("TF HEAD CAMERA LINK");
   // p=tf2::toMsg(tf_head_link);
   // ROS_INFO_STREAM(p);
-  ROS_INFO_STREAM("TF WRIST CAMERA LINK");
-  p=tf2::toMsg(tf_wrist_link);
-  ROS_INFO_STREAM(p);
+  // ROS_INFO_STREAM("TF WRIST CAMERA LINK");
+  // p=tf2::toMsg(tf_wrist_link);
+  // ROS_INFO_STREAM(p);
 
 
 
