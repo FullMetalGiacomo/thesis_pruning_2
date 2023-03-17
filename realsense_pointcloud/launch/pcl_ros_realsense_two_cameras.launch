@@ -50,6 +50,7 @@
 
 
 
+
     <!--The node removes points with higher intensity ( light ) publishes /filtered_depth_image-->
     <node name="pointcloud_preprocess_0" pkg="realsense_pointcloud" type="pointcloud_preprocess.py" output="screen" >
       <!-- input -->
@@ -58,6 +59,19 @@
       <!-- Output -->
       <remap from="/filtered_depth_image" to="/filtered_depth_image_0"/>
     </node>
+
+
+    <!--The node creates the lines and publishes /filtered_depth_cables-->
+    <node name="pointcloud_cable_preprocess" pkg="realsense_pointcloud" type="pointcloud_cables_pcl.py" output="screen" >
+      <!-- input -->
+      <remap from="/camera/color/image_raw" to="/camera_0/color/image_raw"/>
+      <remap from="/camera/aligned_depth_to_color/image_raw" to="/camera_0/aligned_depth_to_color/image_raw"/>
+      <remap from="/camera/color/camera_info" to="/camera_0/color/camera_info"/>
+
+      <!-- Output -->
+      <remap from="/cables_artificial_pointcloud" to="/cables_artificial_pointcloud_0"/>
+    </node>
+
 
     <node name="pointcloud_preprocess_1" pkg="realsense_pointcloud" type="pointcloud_preprocess.py" output="screen" >
       <!-- input -->

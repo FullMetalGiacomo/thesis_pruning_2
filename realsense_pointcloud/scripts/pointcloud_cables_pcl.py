@@ -118,8 +118,11 @@ class cable_preprocesser(object):
         # thinned1 = cv2.ximgproc.thinning(binarized_im1, thinningType=cv2.ximgproc.THINNING_GUOHALL)
         # cv2.imshow('thinned_bin_1_ghuoall',thinned1)
         thinned_im = cv2.ximgproc.thinning(binarized_im)
-        # cv2.imshow('thinned_im',thinned_im)
-        # cv2.waitKey(0)
+        cv2.imshow('thinned_im',thinned_im)
+        cv2.waitKey(0)
+        thinned_im=thinned_im[depth_image_rect_copy<1300]
+        cv2.imshow('thinned_im',thinned_im)
+        cv2.waitKey(0)
         # border_im = cv2.copyMakeBorder(thinned2, top=15, bottom=15, left=15, right=15, borderType=cv2.BORDER_CONSTANT)
         # cv2.imshow('border_im',border_im)
         # thinned11 = cv2.ximgproc.thinning(binarized_im2, thinningType=cv2.ximgproc.THINNING_GUOHALL)
@@ -127,7 +130,6 @@ class cable_preprocesser(object):
         # thinned22 = cv2.ximgproc.thinning(binarized_im2)
         # cv2.imshow('thinned_bin_2',thinned22)
         # cv2.waitKey(0)
-
 
         # Hough transform copies of thinned image for show
         cdst = cv2.cvtColor(thinned_im, cv2.COLOR_GRAY2BGR)
@@ -144,7 +146,7 @@ class cable_preprocesser(object):
         #         cv2.line(cdstP, (l[0], l[1]), (l[2], l[3]), (0,0,255), 2, cv2.LINE_AA)
         # cv2.imshow("gray_im", gray_im)
         # cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
-        # cv2.waitKey(0)
+        # cv2.waitKey(0)fake_image_vector
 
         # the idea is to count the slope of the lines
         # try:
@@ -166,8 +168,8 @@ class cable_preprocesser(object):
                 b = np.random.randint(256)
                 cv2.line(cdstP, (l[0], l[1]), (l[2], l[3]), (r,g,b), 2, cv2.LINE_AA)
 
-        # cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
-        # cv2.waitKey(0)
+        cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
+        cv2.waitKey(0)
         angle_list = np.round(np.array(angle_list),1)
         b_list = np.array(b_list)
         lines_list = np.round(np.array([b_list,angle_list]),1)
@@ -316,8 +318,8 @@ class cable_preprocesser(object):
         fake_image_vector=np.delete(fake_image_vector, remove_idx, axis=0)
         #clearing distance with percentile
         # number_of_points=fake_image_vector.shape[0]
-        # rospy.logerr(fake_image_vector)
-        # rospy.logerr(fake_image_vector.shape)
+        rospy.logerr(fake_image_vector)
+        rospy.logerr(fake_image_vector.shape)
         # mediana_z_clean = np.median(fake_image_reco_vector[:,2],)
         clear_idx= ((fake_image_vector[:,2]>np.percentile(fake_image_vector[:,2],30)) & (fake_image_vector[:,2]<np.percentile(fake_image_vector[:,2],70)))
         # rospy.logerr(clear_idx)
@@ -388,7 +390,7 @@ class cable_preprocesser(object):
         rospy.loginfo(z_variance)
         # rospy.loginfo(magnitude_variance)
 
-        if z_variance>0.0030:
+        if z_variance>0.1:
             rospy.logerr("could not create plane, points too dispersed")
         else:
             ################################## Testing Algorithm
@@ -654,11 +656,12 @@ class cable_preprocesser(object):
         rospy.loginfo("Starting cable preprocesser")
         # srv = Server(Reconfig_paramsConfig, self.recon_callback)
         # r = rospy.Rate(10)
+
         color_image_rect = message_filters.Subscriber('/camera/color/image_raw', Image)
         depth_image_rect = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
         cam_inf=rospy.wait_for_message("/camera/color/camera_info", CameraInfo)
         self.K=cam_inf.K
-
+        rospy.logerr
         ts = message_filters.TimeSynchronizer([color_image_rect, depth_image_rect], 10)
 
         ts.registerCallback(self.reading_callback)
