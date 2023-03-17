@@ -126,17 +126,17 @@ class pcl_preprocesser(object):
         # print(HLS_image[:,:,1]>150)
 
 
-        # depth_image_rect_copy[np.invert(HLS_image_without_lightness_bool)]=0 # removing lightness points
+        depth_image_rect_copy[np.invert(HLS_image_without_lightness_bool)]=0 # removing lightness points
 
         depth_image_rect_copy=np.copy(depth_image_rect_copy)
 
         brown_color_filter=((color_image_rect[:,:,0]<242) & (color_image_rect[:,:,1]<222) & (color_image_rect[:,:,2]<202)) # selecting browns
         # reduces effect of infrared
-        blue_color_filter=((color_image_rect[:,:,0]<60) & (color_image_rect[:,:,1]<150) & (color_image_rect[:,:,2]<255)) # selecting blues
+        #blue_color_filter=((color_image_rect[:,:,0]<60) & (color_image_rect[:,:,1]<150) & (color_image_rect[:,:,2]<255)) # selecting blues
 
-        depth_image_rect_copy[HLS_image[:,:,1]>lightness_thresh]=0 # removing lightness points
+        #depth_image_rect_copy[HLS_image[:,:,1]>lightness_thresh]=0 # removing lightness points
         depth_image_rect_copy[np.invert(brown_color_filter)]=0 # removing color rgb
-        depth_image_rect_copy[np.invert(blue_color_filter)]=0 # removing color rgb
+        #depth_image_rect_copy[np.invert(blue_color_filter)]=0 # removing color rgb
 
 
         ################################################# CABLES SEGMENTATION https://docs.opencv.org/3.4/d9/db0/tutorial_hough_lines.html

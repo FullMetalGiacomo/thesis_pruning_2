@@ -9,6 +9,7 @@ Panels:
         - /PointCloud24
         - /PointCloud211
         - /TF1
+        - /TF1/Frames1
       Splitter Ratio: 0.8294117450714111
     Tree Height: 338
   - Class: rviz/Selection
@@ -148,7 +149,7 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: FlatColor
+      Color Transformer: RGB8
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -159,7 +160,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.00800000037997961
+      Size (m): 0.003000000026077032
       Style: Flat Squares
       Topic: /cropboxremoval_0/output
       Unreliable: false
@@ -370,7 +371,7 @@ Visualization Manager:
       Color: 164; 0; 0
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -385,7 +386,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -580,7 +581,7 @@ Visualization Manager:
         gripper_left_left_finger_link:
           Value: false
         gripper_left_link:
-          Value: false
+          Value: true
         gripper_left_right_finger_link:
           Value: false
         gripper_left_tool_link:
@@ -716,7 +717,7 @@ Visualization Manager:
       Name: TF
       Show Arrows: true
       Show Axes: true
-      Show Names: true
+      Show Names: false
       Tree:
         map:
           odom:
@@ -909,7 +910,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.184972047805786
+      Distance: 1.3600828647613525
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -925,9 +926,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.349796324968338
+      Pitch: 0.009796308353543282
       Target Frame: <Fixed Frame>
-      Yaw: 2.995440721511841
+      Yaw: 2.9854416847229004
     Saved: ~
 Window Geometry:
   Displays:
