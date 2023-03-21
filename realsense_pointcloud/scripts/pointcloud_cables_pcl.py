@@ -118,11 +118,11 @@ class cable_preprocesser(object):
         # thinned1 = cv2.ximgproc.thinning(binarized_im1, thinningType=cv2.ximgproc.THINNING_GUOHALL)
         # cv2.imshow('thinned_bin_1_ghuoall',thinned1)
         thinned_im = cv2.ximgproc.thinning(binarized_im)
-        cv2.imshow('thinned_im',thinned_im)
-        cv2.waitKey(0)
-        thinned_im=thinned_im[depth_image_rect_copy<1300]
-        cv2.imshow('thinned_im',thinned_im)
-        cv2.waitKey(0)
+        # cv2.imshow('thinned_im',thinned_im)
+        # cv2.waitKey(0)
+        # thinned_im[depth_image_rect_copy>2000]=0
+        # cv2.imshow('thinned_im_depth',thinned_im)
+        # cv2.waitKey(0)
         # border_im = cv2.copyMakeBorder(thinned2, top=15, bottom=15, left=15, right=15, borderType=cv2.BORDER_CONSTANT)
         # cv2.imshow('border_im',border_im)
         # thinned11 = cv2.ximgproc.thinning(binarized_im2, thinningType=cv2.ximgproc.THINNING_GUOHALL)
@@ -168,8 +168,8 @@ class cable_preprocesser(object):
                 b = np.random.randint(256)
                 cv2.line(cdstP, (l[0], l[1]), (l[2], l[3]), (r,g,b), 2, cv2.LINE_AA)
 
-        cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
-        cv2.waitKey(0)
+        # cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
+        # cv2.waitKey(0)
         angle_list = np.round(np.array(angle_list),1)
         b_list = np.array(b_list)
         lines_list = np.round(np.array([b_list,angle_list]),1)
@@ -318,8 +318,8 @@ class cable_preprocesser(object):
         fake_image_vector=np.delete(fake_image_vector, remove_idx, axis=0)
         #clearing distance with percentile
         # number_of_points=fake_image_vector.shape[0]
-        rospy.logerr(fake_image_vector)
-        rospy.logerr(fake_image_vector.shape)
+        # rospy.logerr(fake_image_vector)
+        # rospy.logerr(fake_image_vector.shape)
         # mediana_z_clean = np.median(fake_image_reco_vector[:,2],)
         clear_idx= ((fake_image_vector[:,2]>np.percentile(fake_image_vector[:,2],30)) & (fake_image_vector[:,2]<np.percentile(fake_image_vector[:,2],70)))
         # rospy.logerr(clear_idx)
@@ -360,14 +360,14 @@ class cable_preprocesser(object):
         u1=np.cross(plane.normal,[0,0,1]) # first vector orthogonal to normal
         u1=u1/np.linalg.norm(u1) # normalizing
         u2=np.cross(plane.normal,u1)# second vector orthogonal to normal
-        rospy.logerr(plane.normal)
+        # rospy.logerr(plane.normal)
         R=np.array([(u1),(u2),(plane.normal)]) # rotational matrix of the plane
-        rospy.logerr(R.shape)
-        rospy.logerr(test_points.shape)
+        # rospy.logerr(R.shape)
+        # rospy.logerr(test_points.shape)
         rotated_test_points=np.dot(R,test_points.T)
-        rospy.logerr(rotated_test_points)
-        rospy.logerr(test_points)
-        rospy.logerr(rotated_test_points.shape)
+        # rospy.logerr(rotated_test_points)
+        # rospy.logerr(test_points)
+        # rospy.logerr(rotated_test_points.shape)
         x_variance_transformed=np.var(rotated_test_points[0,:]/1000)
         y_variance_transformed=np.var(rotated_test_points[1,:]/1000)
         z_variance_transformed=np.var(rotated_test_points[2,:]/1000)
