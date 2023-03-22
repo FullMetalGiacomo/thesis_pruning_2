@@ -47,6 +47,8 @@
   <rosparam file="$(find realsense_pointcloud)/cfg/camera_temporal_filter.yaml" command="load" />
   <rosparam file="$(find realsense_pointcloud)/cfg/camera_hole_filling_filter.yaml" command="load" />
 
+  <!-- only for rosbags! -->
+  <param name ="/use_sim_time" value="true"/> 
 
 
 

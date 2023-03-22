@@ -1,0 +1,50 @@
+<launch>
+  <!-- launching two cameras with tfs -->
+   <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+    <arg name="camera" value="camera_0"/>
+    <arg name="serial_no" value="841512070858"/>
+
+    <arg name="align_depth" value="True"/>
+    <arg name="color_fps" value="15"/>
+    <arg name="color_width" value="1280"/>
+    <arg name="color_height" value="720"/>
+    <arg name="depth_fps" value="15"/>
+    <arg name="depth_width" value="1280"/>
+    <arg name="depth_height" value="720"/>
+    <arg name="enable_pointcloud" value="True"/>
+    <arg name="enable_infra" value="True"/>
+    <arg name="filters" value="decimation,spatial,temporal"/>
+  </include>
+
+  <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+    <arg name="camera" value="camera_1"/>
+    <arg name="serial_no" value="831612071569"/>
+
+    <arg name="align_depth" value="True"/>
+    <arg name="color_fps" value="15"/>
+    <arg name="color_width" value="1280"/>
+    <arg name="color_height" value="720"/>
+    <arg name="depth_fps" value="15"/>
+    <arg name="depth_width" value="1280"/>
+    <arg name="depth_height" value="720"/>
+    <arg name="enable_pointcloud" value="True"/>
+    <arg name="enable_infra" value="True"/>
+    <arg name="filters" value="decimation,spatial,temporal"/>
+  </include>
+
+  <rosparam file="$(find realsense_pointcloud)/cfg/camera_decimation_filter.yaml" command="load" />
+  <rosparam file="$(find realsense_pointcloud)/cfg/camera_spatial_filter.yaml" command="load" />
+  <rosparam file="$(find realsense_pointcloud)/cfg/camera_temporal_filter.yaml" command="load" />
+  <rosparam file="$(find realsense_pointcloud)/cfg/camera_hole_filling_filter.yaml" command="load" />
+
+  <include file="$(find iri_dynamic_transform_publisher)/launch/node.launch">
+    <arg name="node_name"       value="tf_wrist_camera_publisher"/>
+    <arg name="params_path"   value="$(find iri_two_cameras)/config/tf_wrist_camera.yaml"/>
+  </include>
+
+  <include file="$(find iri_dynamic_transform_publisher)/launch/node.launch">
+    <arg name="node_name"       value="tf_canopies_head_publisher"/>
+    <arg name="params_path"   value="$(find iri_two_cameras)/config/tf_canopies_head.yaml"/>
+  </include>
+
+</launch>

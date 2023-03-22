@@ -227,6 +227,7 @@ class cable_preprocesser(object):
                 cv2.line(only_cables_image, (u1, v1), (u2, v2), (255,255,255), 2, cv2.LINE_AA)
 
         lines_borders_pixels=np.array(lines_borders_pixels) # u1 v1 u2 v2
+        rospy.loginfo(lines_borders_pixels)
         # checkpoint_hough = str((time.time() - start_time)) # 0.1
         # rospy.loginfo("all hough transforms times:")
         # rospy.loginfo(checkpoint_hough)
@@ -457,7 +458,7 @@ class cable_preprocesser(object):
             lmn[:,2]=(xyz_coord_list[:,5]-xyz_coord_list[:,2])
             # rospy.logwarn(lmn)
 
-            number_of_points_per_line=500
+            number_of_points_per_line=1000
             x=np.linspace(-700,700,number_of_points_per_line)
             cloud_array=[]
             holder_xyz_lines=np.zeros(shape=(number_of_points_per_line,3))
@@ -477,6 +478,7 @@ class cable_preprocesser(object):
             # rospy.logwarn(cloud_array)
             cloud_array=np.reshape(cloud_array,(int(cloud_array.shape[0]*number_of_points_per_line),3))
             cloud_array=cloud_array[(cloud_array[:,1]>-0.7)&(cloud_array[:,1]<0.7)] # cleaning upper and lower points
+            cloud_array=cloud_array[(cloud_array[:,2]>0)&(cloud_array[:,1]<3)] 
             # rospy.logwarn(cloud_array.shape)
             # rospy.logwarn(cloud_array)
             # points = Points(cloud_array)
