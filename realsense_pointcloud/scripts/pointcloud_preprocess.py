@@ -74,10 +74,7 @@ class pcl_preprocesser(object):
         HLS_image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2HLS_FULL)
         # cv2.imshow('HLS_image',HLS_image)
         # cv2.waitKey(0)
-        # HLS_image_without_lightness = cv2.inRange(HLS_image, HSL_MinLight, HSL_MaxLight)
-        # print(HLS_image_without_lightness)
-        # print(type(HLS_image_without_lightness))
-        # print(HLS_image_without_lightness.size)
+        # HLS_image_without_lightness = cv2.inRange(HLS_image, 100, 255)
         # cv2.imshow('HLS_image_whithout_lightness',HLS_image_without_lightness)
         # cv2.waitKey(0)
         # ret,HLS_image_without_lightness_thresh = cv2.threshold(HLS_image_without_lightness,127,255,cv2.THRESH_BINARY)
@@ -129,17 +126,17 @@ class pcl_preprocesser(object):
         #depth_image_rect_copy[np.invert(HLS_image_without_lightness_bool)]=0 # removing lightness points
 
         depth_image_rect_copy=np.copy(depth_image_rect_copy)
-
+        # tries to keep the brown colors
         brown_color_filter=((color_image_rect[:,:,0]<242) & (color_image_rect[:,:,1]<222) & (color_image_rect[:,:,2]<202)) # selecting browns
         # reduces effect of infrared
         #blue_color_filter=((color_image_rect[:,:,0]<60) & (color_image_rect[:,:,1]<150) & (color_image_rect[:,:,2]<255)) # selecting blues
 
         depth_image_rect_copy[HLS_image[:,:,1]>lightness_thresh]=0 # removing lightness points
-        depth_image_rect_copy[np.invert(brown_color_filter)]=0 # removing color rgb
+        # depth_image_rect_copy[np.invert(brown_color_filter)]=0 # removing color rgb
         #depth_image_rect_copy[np.invert(blue_color_filter)]=0 # removing color rgb
 
 
-        
+
 
         ######################## PUBLISHING
         # cv2.imshow('depth_image_rect_copy',depth_image_rect_copy)

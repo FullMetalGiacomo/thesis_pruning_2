@@ -52,10 +52,6 @@ class cable_preprocesser(object):
         # self.rgb_pub = rospy.Publisher('/rgb_crop',  Image, queue_size=1)
         self.depth_cables_pub = rospy.Publisher('/filtered_depth_cables',  Image, queue_size=1)
         self.pcl_cables_pub = rospy.Publisher('/cables_artificial_pointcloud', PointCloud2, queue_size=10)
-        self.points_of_plane_pub = rospy.Publisher('/points_of_plane', PointCloud2, queue_size=10)
-        self.points_of_plane_rot_pub = rospy.Publisher('/points_of_plane_rot', PointCloud2, queue_size=10)
-
-
         # self.crop_par=rospy.Publisher('/crop_param',Float64MultiArray,queue_size=1)
         # self.stelldaten = rospy.Publisher('processed_pcl', PointCloud2, queue_size=10)
 
@@ -79,9 +75,10 @@ class cable_preprocesser(object):
         y= (z/K[4])*(v-K[5])
         return x,y
 
-    def reading_callback(self,color_image_rect, depth_image_rect):
+    def reading_callback(self,color_image_rect, depth_image_rect,cloud_sub):
     # Solve all of perception here...
         ################################################# READING
+
         start_time = time.time()
 
         color_image_rect=np.frombuffer(color_image_rect.data, dtype=np.uint8).reshape(color_image_rect.height, color_image_rect.width, -1)
@@ -267,81 +264,104 @@ class cable_preprocesser(object):
         # plt.show()
 
         ############### Only cables processing
-        only_cables_gray_image = cv2.cvtColor(only_cables_image, cv2.COLOR_RGB2GRAY)
-        th, binarized_only_cables_im = cv2.threshold(only_cables_gray_image, 128, 255, cv2.THRESH_BINARY_INV)
-        th, binarized_only_cables_im_plane = cv2.threshold(only_cables_gray_image, 128, 255, cv2.THRESH_BINARY)
+        # only_cables_gray_image = cv2.cvtColor(only_cables_image, cv2.COLOR_RGB2GRAY)
+        # th, binarized_only_cables_im = cv2.threshold(only_cables_gray_image, 128, 255, cv2.THRESH_BINARY_INV)
+        # th, binarized_only_cables_im_plane = cv2.threshold(only_cables_gray_image, 128, 255, cv2.THRESH_BINARY)
         # cv2.imshow("binarized_only_cables_im", binarized_only_cables_im)
-        # print(type(binarized_only_cables_im))
-        binarized_only_cables_im.dtype='bool'
-        # rospy.loginfo(binarized_only_cables_im)
-        # rospy.loginfo(type(binarized_only_cables_im))
-        # rospy.loginfo(binarized_only_cables_im.shape)
-        # rospy.loginfo(type(depth_image_rect_copy_cables))
-        # rospy.loginfo(depth_image_rect_copy_cables.shape)
-        # cv2.waitKey(0)
-
-        depth_image_rect_copy_cables[binarized_only_cables_im]=0
-        # rospy.loginfo(type(depth_image_rect_copy_cables))
-        # rospy.loginfo(depth_image_rect_copy_cables.shape)
-
-        ##############3 i need to create a plane on which the lines are staying.
-        ################# select only close distance points
-
-        plane_points_generators=np.copy(depth_image_rect_copy_cables)
-        plane_points_generators[plane_points_generators[:,:] < 400]=0
-        plane_points_generators[plane_points_generators[:,:] > 1200]=0 # its millimiters!
-        # print(plane_points_generators.mean())
-        # print(plane_points_generators.shape)
-        # print(np.count_nonzero(plane_points_generators))
-        # print(type(plane_points_generators))
-
-        # checkpoint_cleaning = str((time.time() - start_time)) # 0.1
-        # rospy.loginfo("all cleaning  times:")
-        # rospy.loginfo(checkpoint_cleaning)
-
-        plane_thresh_im=np.copy(plane_points_generators)
-
-        #fake depth image for plane creation
-
-        fake_image = np.zeros(shape=(720,1280,3))
-        fake_image[:,:,0]=self.u
-        fake_image[:,:,1]=self.v
-        fake_image[:,:,2]= plane_points_generators
-        fake_image_vector=np.reshape(fake_image,(1280*720,3))
-
-        # fake_image_vector = fake_image_vector[np.all(fake_image_vector[:,2] != 0, axis=1)]
-        fake_image_vector = fake_image_vector[(fake_image_vector[:,2] != 0)] #removing depth rows =0
-
-        # checkpoint_fake_img = str((time.time() - start_time))
-        # rospy.loginfo("checkpoint_fake_img:")
-        # rospy.loginfo(checkpoint_fake_img)
-
-        # randomly reducing vector size
-        remove_idx= np.random.randint(0,fake_image_vector.shape[0],int(fake_image_vector.shape[0]*0.9)) # removing 0.n% of data
-        fake_image_vector=np.delete(fake_image_vector, remove_idx, axis=0)
-        #clearing distance with percentile
-        # number_of_points=fake_image_vector.shape[0]
-        # rospy.logerr(fake_image_vector)
-        # rospy.logerr(fake_image_vector.shape)
-        # mediana_z_clean = np.median(fake_image_reco_vector[:,2],)
-        # cleaning on z
+        # # print(type(binarized_only_cables_im))
+        # binarized_only_cables_im.dtype='bool'
+        # # rospy.loginfo(binarized_only_cables_im)
+        # # rospy.loginfo(type(binarized_only_cables_im))
+        # # rospy.loginfo(binarized_only_cables_im.shape)
+        # # rospy.loginfo(type(depth_image_rect_copy_cables))
+        # # rospy.loginfo(depth_image_rect_copy_cables.shape)
+        # # cv2.waitKey(0)
+        #
+        # depth_image_rect_copy_cables[binarized_only_cables_im]=0
+        # # rospy.loginfo(type(depth_image_rect_copy_cables))
+        # # rospy.loginfo(depth_image_rect_copy_cables.shape)
+        #
+        # ##############3 i need to create a plane on which the lines are staying.
+        # ################# select only close distance points
+        #
+        # plane_points_generators=np.copy(depth_image_rect_copy_cables)
+        # plane_points_generators[plane_points_generators[:,:] < 400]=0
+        # plane_points_generators[plane_points_generators[:,:] > 1200]=0 # its millimiters!
+        # # print(plane_points_generators.mean())
+        # # print(plane_points_generators.shape)
+        # # print(np.count_nonzero(plane_points_generators))
+        # # print(type(plane_points_generators))
+        #
+        # # checkpoint_cleaning = str((time.time() - start_time)) # 0.1
+        # # rospy.loginfo("all cleaning  times:")
+        # # rospy.loginfo(checkpoint_cleaning)
+        #
+        # plane_thresh_im=np.copy(plane_points_generators)
+        #
+        # #fake depth image for plane creation
+        #
+        # fake_image = np.zeros(shape=(720,1280,3))
+        # fake_image[:,:,0]=self.u
+        # fake_image[:,:,1]=self.v
+        # fake_image[:,:,2]= plane_points_generators
+        # fake_image_vector=np.reshape(fake_image,(1280*720,3))
+        #
+        # # fake_image_vector = fake_image_vector[np.all(fake_image_vector[:,2] != 0, axis=1)]
+        # fake_image_vector = fake_image_vector[(fake_image_vector[:,2] != 0)] #removing depth rows =0
+        #
+        # # checkpoint_fake_img = str((time.time() - start_time))
+        # # rospy.loginfo("checkpoint_fake_img:")
+        # # rospy.loginfo(checkpoint_fake_img)
+        #
+        # # randomly reducing vector size
+        # remove_idx= np.random.randint(0,fake_image_vector.shape[0],int(fake_image_vector.shape[0]*0.9)) # removing 0.n% of data
+        # fake_image_vector=np.delete(fake_image_vector, remove_idx, axis=0)
+        # #clearing distance with percentile
+        # # number_of_points=fake_image_vector.shape[0]
+        # # rospy.logerr(fake_image_vector)
+        # # rospy.logerr(fake_image_vector.shape)
+        # # mediana_z_clean = np.median(fake_image_reco_vector[:,2],)
+        # # cleaning on z
         # clear_idx= ((fake_image_vector[:,2]>np.percentile(fake_image_vector[:,2],30)) & (fake_image_vector[:,2]<np.percentile(fake_image_vector[:,2],70)))
+        # # rospy.logerr(clear_idx)
+        # # rospy.logerr(clear_idx.shape)
+        # fake_image_vector=fake_image_vector[clear_idx,:]
+        # # cleaning on u
+        # clear_idx= ((fake_image_vector[:,0]>160) & (fake_image_vector[:,0]<1120)) # removing 2/8 of u
+        # # rospy.logerr(clear_idx)
+        # # rospy.logerr(clear_idx.shape)
+        # fake_image_vector=fake_image_vector[clear_idx,:]
+        # # cleaning on v
+        # clear_idx= ((fake_image_vector[:,1]>90) & (fake_image_vector[:,1]<630)) # removing 2/8 of u
+        # # rospy.logerr(clear_idx)
+        # # rospy.logerr(clear_idx.shape)
+        # fake_image_vector=fake_image_vector[clear_idx,:]
+        #
+        # # rospy.logerr(fake_image_vector)
+        # # rospy.logerr(fake_image_vector.shape)
+        # #transforming to xyz
+        #
+        # reco_vector_pcl= np.zeros(shape=(fake_image_vector.shape[0],3))
+        # reco_vector_pcl[:,0]=(fake_image_vector[:,2]/self.K[0])*(fake_image_vector[:,0]-self.K[2])
+        # reco_vector_pcl[:,1]=(fake_image_vector[:,2]/self.K[4])*(fake_image_vector[:,1]-self.K[5])
+        # reco_vector_pcl[:,2]=fake_image_vector[:,2]
+        # # rospy.loginfo(reco_vector_pcl)
+        # # rospy.logerr(reco_vector_pcl.shape)
+
+
+        # creating plane with the pointcloud of the plants from the pointcloud_preprocess pipeline
+        xyz_array = self.extract_pcl(cloud_sub)*1000 # to mm
+        clear_idx= ((xyz_array[:,2]>np.percentile(xyz_array[:,2],30)) & (xyz_array[:,2]<np.percentile(xyz_array[:,2],70)))
         # rospy.logerr(clear_idx)
         # rospy.logerr(clear_idx.shape)
-        # fake_image_vector=fake_image_vector[clear_idx,:]
-        # rospy.logerr(fake_image_vector)
-        # rospy.logerr(fake_image_vector.shape)
-        #transforming to xyz
+        xyz_array=xyz_array[clear_idx,:]
 
-        reco_vector_pcl= np.zeros(shape=(fake_image_vector.shape[0],3))
-        reco_vector_pcl[:,0]=(fake_image_vector[:,2]/self.K[0])*(fake_image_vector[:,0]-self.K[2])
-        reco_vector_pcl[:,1]=(fake_image_vector[:,2]/self.K[4])*(fake_image_vector[:,1]-self.K[5])
-        reco_vector_pcl[:,2]=fake_image_vector[:,2]
-        # rospy.loginfo(reco_vector_pcl)
-        # rospy.logerr(reco_vector_pcl.shape)
+        # rospy.loginfo(xyz_array)
+        # rospy.loginfo(xyz_array.shape)
+        # rospy.loginfo(type(xyz_array))
+
         # creating plane
-        my_node.publishPC2_points_of_plane(reco_vector_pcl/1000,depth_image_rect)
-        points = Points(reco_vector_pcl)
+        points = Points(xyz_array)
         plane = Plane.best_fit(points)
         # rospy.logerr(plane)
         # fig = plt.figure(num=1)
@@ -357,11 +377,10 @@ class cable_preprocesser(object):
         # points.plot_3d(ax,c='k', s=0.01, depthshade=False)
         # plane.plot_3d(ax,alpha=0.2, lims_x=(-800, 800), lims_y=(-800, 800))
         # plt.pause(0.001)
+
         ######################33 if the points are too dispersed wrt to plane we don't want to find the lines
-        test_points=np.copy(reco_vector_pcl)/1000 ## moving points to center and find the reference frame of plane ( z = normal plane)
-        test_points_plane=np.copy(reco_vector_pcl)/1000
-        # rospy.loginfo("mean of test points")
-        # rospy.loginfo(np.mean(test_points[:,2]))
+        test_points=np.copy(xyz_array)/1000 ## moving points to center and find the reference frame of plane ( z = normal plane)
+        test_points_plane=np.copy(xyz_array)/1000
         test_points_plane[:,0]=test_points_plane[:,0]-plane.point[0]/1000
         test_points_plane[:,1]=test_points_plane[:,1]-plane.point[1]/1000
         test_points_plane[:,2]=test_points_plane[:,2]-plane.point[2]/1000
@@ -373,7 +392,7 @@ class cable_preprocesser(object):
         u1=u1/np.linalg.norm(u1) # normalizing
         u2=np.cross(plane.normal,u1)# second vector orthogonal to normal
         # rospy.logerr(plane.normal)
-        R=np.array([(u1),(u2),(plane.normal)]).T # rotational matrix of the plane
+        R=np.array([(u1),(u2),(plane.normal)]) # rotational matrix of the plane
         # rospy.loginfo(u1)
         # rospy.loginfo(u2)
         # rospy.loginfo(plane)
@@ -390,14 +409,14 @@ class cable_preprocesser(object):
         z_std_transformed=np.var(rotated_test_points[:,2])
         magnitude_std_transformed=np.linalg.norm([x_std_transformed,y_std_transformed,z_std_transformed])
 
-
+        # rospy.logwarn(test_points)
 
         x_std=np.std(test_points[:,0])
         y_std=np.std(test_points[:,1])
         z_std=np.std(test_points[:,2])
         magnitude_std=np.linalg.norm([x_std,y_std,z_std])
 
-        # rospy.loginfo(" std dev xyz")
+        # rospy.loginfo(" std dev xyz with plant")
         # rospy.loginfo(x_std)
         # rospy.loginfo(y_std)
         # rospy.loginfo(z_std)
@@ -405,32 +424,16 @@ class cable_preprocesser(object):
 
         # rospy.logwarn(rotated_test_points)
 
-
-        # rospy.loginfo("rotated std dev xyz")
+        # rospy.loginfo("rotated std dev xyz with plant")
         # rospy.loginfo(x_std_transformed)
         # rospy.loginfo(y_std_transformed)
         # rospy.loginfo(z_std_transformed)
         # rospy.loginfo(magnitude_std_transformed)
 
-        if z_std_transformed>0.03:
-            rospy.logerr("could not create plane, points too dispersed")
+
+        if z_std_transformed>0.02:
+            rospy.logerr("nothing to see here!")
         else:
-            ####################################3 trying to clean from plane rotation/projection points!
-            ### idea is to clean the lower part of rotated points.
-            clear_idx= ((rotated_test_points[:,2]>np.percentile(rotated_test_points[:,2],20)) & (rotated_test_points[:,2]<np.percentile(rotated_test_points[:,2],80)))
-            rotated_test_points=rotated_test_points[clear_idx,:]
-            ## rerotate and publish
-            derotated_test_points= np.dot(rotated_test_points,np.linalg.inv(R))
-            # retranslate them
-            derotated_test_points[:,0]= derotated_test_points[:,0] + plane.point[0]/1000
-            derotated_test_points[:,1]= derotated_test_points[:,1] + plane.point[1]/1000
-            derotated_test_points[:,2]= derotated_test_points[:,2] + plane.point[2]/1000
-
-            my_node.publishPC2_points_of_plane_rotated(derotated_test_points,depth_image_rect)
-            ## rebuild plane
-            points = Points(derotated_test_points*1000)
-            plane = Plane.best_fit(points)
-
             ################################## Testing Algorithm
             # lines_borders_pixels u1 v1 u2 v2
             xy_coord_list=[]
@@ -689,40 +692,29 @@ class cable_preprocesser(object):
         pc2 = point_cloud2.create_cloud(header, fields, points)
         self.pcl_cables_pub.publish(pc2)
 
-    def publishPC2_points_of_plane(self,cloud_array,depth_image_rect):
-        fields = [PointField('x', 0, PointField.FLOAT32, 1),
-                  PointField('y', 4, PointField.FLOAT32, 1),
-                  PointField('z', 8, PointField.FLOAT32, 1),
-                  PointField('intensity', 12, PointField.FLOAT32, 1)]
+    def extract_pcl(self, ros_point_cloud):
+            xyz = np.array([[0,0,0]])
+            rgb = np.array([[0,0,0]])
+            #self.lock.acquire()
+            gen = point_cloud2.read_points(ros_point_cloud, skip_nans=True)
+            int_data = list(gen)
 
-        header = depth_image_rect.header
-        # header.frame_id = "camera_left_d435_link"
-        # header.stamp = rospy.Time.now()
-        #
-        # x, y = np.meshgrid(np.linspace(-2,2,width), np.linspace(-2,2,height))
-        # z = 0.5 * np.sin(2*x - count/10.0) * np.sin(2*y)
-        points = np.array([cloud_array[:,0],cloud_array[:,1],cloud_array[:,2],cloud_array[:,2]]).reshape(4,-1).T
+            for x in int_data:
+                test = x[3]
+                # cast float32 to int so that bitwise operations are possible
+                s = struct.pack('>f' ,test)
+                i = struct.unpack('>l',s)[0]
+                # you can get back the float value by the inverse operations
+                pack = ctypes.c_uint32(i).value
+                r = (pack & 0x00FF0000)>> 16
+                g = (pack & 0x0000FF00)>> 8
+                b = (pack & 0x000000FF)
+                # prints r,g,b values in the 0-255 range
+                            # x,y,z can be retrieved from the x[0],x[1],x[2]
+                xyz = np.append(xyz,[[x[0],x[1],x[2]]], axis = 0)
+                rgb = np.append(rgb,[[r,g,b]], axis = 0)
 
-        pc2 = point_cloud2.create_cloud(header, fields, points)
-        self.points_of_plane_pub.publish(pc2)
-
-    def publishPC2_points_of_plane_rotated(self,cloud_array,depth_image_rect):
-        fields = [PointField('x', 0, PointField.FLOAT32, 1),
-                  PointField('y', 4, PointField.FLOAT32, 1),
-                  PointField('z', 8, PointField.FLOAT32, 1),
-                  PointField('intensity', 12, PointField.FLOAT32, 1)]
-
-        header = depth_image_rect.header
-        # header.frame_id = "camera_left_d435_link"
-        # header.stamp = rospy.Time.now()
-        #
-        # x, y = np.meshgrid(np.linspace(-2,2,width), np.linspace(-2,2,height))
-        # z = 0.5 * np.sin(2*x - count/10.0) * np.sin(2*y)
-        points = np.array([cloud_array[:,0],cloud_array[:,1],cloud_array[:,2],cloud_array[:,2]]).reshape(4,-1).T
-
-        pc2 = point_cloud2.create_cloud(header, fields, points)
-        self.points_of_plane_rot_pub.publish(pc2)
-
+            return xyz
 
 
 
@@ -733,10 +725,11 @@ class cable_preprocesser(object):
 
         color_image_rect = message_filters.Subscriber('/camera/color/image_raw', Image)
         depth_image_rect = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
+        cloud_sub = message_filters.Subscriber("/cloud_topic", PointCloud2,queue_size=1, buff_size=52428800)
         cam_inf=rospy.wait_for_message("/camera/color/camera_info", CameraInfo)
         self.K=cam_inf.K
         rospy.logerr
-        ts = message_filters.TimeSynchronizer([color_image_rect, depth_image_rect], 10)
+        ts = message_filters.TimeSynchronizer([color_image_rect, depth_image_rect,cloud_sub], 10)
 
         ts.registerCallback(self.reading_callback)
         rospy.loginfo("cables_preprocess_is_working")

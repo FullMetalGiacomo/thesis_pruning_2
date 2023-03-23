@@ -77,6 +77,8 @@
     </node>
 
 
+
+
     <node name="pointcloud_preprocess_1" pkg="realsense_pointcloud" type="pointcloud_preprocess.py" output="screen" >
       <!-- input -->
       <remap from="/camera/color/image_raw" to="/camera_1/color/image_raw"/>
@@ -227,6 +229,17 @@ min_cluster_size: 200
 </rosparam>
 </node>
 
+<!--The node creates the lines and publishes /filtered_depth_cables-->
+<node name="pointcloud_cable_preprocess_plant" pkg="realsense_pointcloud" type="pointcloud_cables_pcl_with_plant_pcl.py" output="screen" >
+  <!-- input -->
+  <remap from="/camera/color/image_raw" to="/camera_0/color/image_raw"/>
+  <remap from="/camera/aligned_depth_to_color/image_raw" to="/camera_0/aligned_depth_to_color/image_raw"/>
+  <remap from="/camera/color/camera_info" to="/camera_0/color/camera_info"/>
+  <remap from="cloud_topic" to="/statistical_filtered_points_0/output"/>
+
+  <!-- Output -->
+  <remap from="/cables_artificial_pointcloud" to="/cables_artificial_pointcloud_0_with_plants"/>
+</node>
 
 
 <!-- ########################## PIPELINE FOR CAMERA_1 -->

@@ -40,6 +40,7 @@
     <node name="pointcloud_preprocess" pkg="realsense_pointcloud" type="pointcloud_preprocess.py" output="screen" />
     <node name="pointcloud_cable_preprocess" pkg="realsense_pointcloud" type="pointcloud_cables_pcl.py" output="screen" />
 
+
     <!-- Convert the depth image and the rgb image into a xyzrgb Point Cloud -->
     <!-- <node name="update_frame_id" pkg="depth_image_proc" type="update_frame_id.py" output="screen" /> -->
     <!-- Nodelet manager for this pipeline -->
@@ -180,6 +181,16 @@ region_color_threshold: 50
 min_cluster_size: 200
 </rosparam>
 </node>
+
+
+<node name="pointcloud_cable_preprocess_plant" pkg="realsense_pointcloud" type="pointcloud_cables_pcl_with_plant_pcl.py" output="screen" >
+  <!-- input -->
+  <remap from="cloud_topic" to="/statistical_filtered_points/output"/>
+
+  <!-- Output -->
+  <remap from="/cables_artificial_pointcloud" to="/cables_artificial_pointcloud_with_plants"/>
+</node>
+
 
 <!-- <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
   <remap from="cloud_in" to="/statistical_filtered_points/output" />
