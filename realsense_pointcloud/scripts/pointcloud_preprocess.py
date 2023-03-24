@@ -22,6 +22,7 @@ from std_msgs.msg import Header
 import message_filters
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
+import scipy.ndimage as scind
 
 # roslaunch realsense2_camera rs_camera.launch align_depth:=true mode:=manualcolor_fps:=15 color_width:=1280 color_height:=720 depth_fps:=15 depth_width:=1280 depth_height:=720 enable_pointcloud:=True flters:=spatial,temporal,hole_filling,decimation,disparity
 
@@ -61,21 +62,94 @@ class pcl_preprocesser(object):
         ################################################# READING
         color_image_rect=np.frombuffer(color_image_rect.data, dtype=np.uint8).reshape(color_image_rect.height, color_image_rect.width, -1)
         depth_image_rect_copy=np.frombuffer(depth_image_rect.data, dtype=np.uint16).reshape(depth_image_rect.height, depth_image_rect.width)
-        depth_image_rect_copy_cables=np.copy(depth_image_rect_copy)
+        depth_image_tests=np.copy(depth_image_rect_copy)
 
         # cv2.imshow('color_image_rect',color_image_rect)
         # cv2.waitKey(0)
         ################################################# PLANT SEGMENTATION
+        # light removal and experiments on adaptive light threshold ( gone bad because of infrared )
+        HLS_image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2HLS_FULL)
 
-        # light removal
-        lightness_thresh=100; # dynamic param should be implemented
+
+        #
+        # gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
+        # # cv2.imshow('gray_im',gray_im)
+        # # cv2.waitKey(0)
+        # blur_im = cv2.GaussianBlur(gray_im, (3,3),1)
+        # # cv2.imshow('blur_im',blur_im)
+        # (T,binarized_im_1)  = cv2.threshold(HLS_image[:,:,1], 0, 255, cv2.THRESH_BINARY | cv2.THRESH_TRIANGLE)
+        #
+        # cv2.imshow(str(T),binarized_im_1)
+
+        # lightness_thresh=0.85*T;
+        lightness_thresh=100;
         # HSL_MinLight = np.array([0,  0, 0],np.uint8)
         # HSL_MaxLight = np.array([255, lightness_thresh, 255],np.uint8)
-        HLS_image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2HLS_FULL)
         # cv2.imshow('HLS_image',HLS_image)
         # cv2.waitKey(0)
-        # HLS_image_without_lightness = cv2.inRange(HLS_image, 100, 255)
-        # cv2.imshow('HLS_image_whithout_lightness',HLS_image_without_lightness)
+        HLS_image_without_lightness = cv2.inRange(HLS_image[:,:,1], lightness_thresh, 255)
+        cv2.imshow('HLS_image_whithout_lightness',HLS_image_without_lightness)
+        # cv2.waitKey(0)
+        #############################3 check on brown color filters
+        r=242
+        g=222
+        b=130
+        # b=120
+        ## rgb rbg bgr brg gbr grb
+        # rgb
+        brown_color_filter_1=((color_image_rect[:,:,0]<r) & (color_image_rect[:,:,1]<g) & (color_image_rect[:,:,2]<b))
+        gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
+        gray_im[np.invert(brown_color_filter_1)]=0
+        cv2.imshow('brown_color_filter_1',gray_im)
+        # rbg
+        brown_color_filter_2=((color_image_rect[:,:,0]<r) & (color_image_rect[:,:,1]<g) & (color_image_rect[:,:,2]<b))
+        gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
+        gray_im[np.invert(brown_color_filter_2)]=0
+        cv2.imshow('brown_color_filter_2',gray_im)
+        # bgr
+        brown_color_filter_3=((color_image_rect[:,:,0]<g) & (color_image_rect[:,:,1]<b) & (color_image_rect[:,:,2]<r))
+        gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
+        gray_im[np.invert(brown_color_filter_3)]=0
+        cv2.imshow('brown_color_filter_3',gray_im)
+        # brg
+        brown_color_filter_4=((color_image_rect[:,:,0]<g) & (color_image_rect[:,:,1]<r) & (color_image_rect[:,:,2]<b))
+        gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
+        gray_im[np.invert(brown_color_filter_4)]=0
+        cv2.imshow('brown_color_filter_4',gray_im)
+        # gbr
+        brown_color_filter_5=((color_image_rect[:,:,0]<b) & (color_image_rect[:,:,1]<g) & (color_image_rect[:,:,2]<r))
+
+        # grb
+        brown_color_filter_6=((color_image_rect[:,:,0]<b) & (color_image_rect[:,:,1]<r) & (color_image_rect[:,:,2]<g))
+
+
+        brown_color_filter= (brown_color_filter_1) & (brown_color_filter_2) & brown_color_filter_3 & brown_color_filter_4 & brown_color_filter_5 & brown_color_filter_6
+        gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
+        blur_im = cv2.GaussianBlur(gray_im, (3,3),1)
+        blur_im[np.invert(brown_color_filter)]=0
+        cv2.imshow('whole_filter',blur_im)
+        cv2.waitKey(0)
+
+        ########### blue?
+
+        #blue_color_filter=((color_image_rect[:,:,0]<60) & (color_image_rect[:,:,1]<150) & (color_image_rect[:,:,2]<255)) # selecting blues
+
+
+        # cv2.waitKey(0)
+        #
+        # gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
+        # # cv2.imshow('gray_im',gray_im)
+        # # cv2.waitKey(0)
+        # blur_im = cv2.GaussianBlur(gray_im, (3,3),1)
+        # # cv2.imshow('blur_im',blur_im)
+        # # cv2.waitKey(0)
+        # # canny_im = cv2.Canny(blur_im, 50, 150)
+        # # cv2.imshow('canny_im',canny_im)
+        # # cv2.waitKey(0)
+        #
+        # binarized_im = cv2.adaptiveThreshold(blur_im,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY_INV,13,5)
+        # cv2.imshow('binarized_im',binarized_im)
+        #
         # cv2.waitKey(0)
         # ret,HLS_image_without_lightness_thresh = cv2.threshold(HLS_image_without_lightness,127,255,cv2.THRESH_BINARY)
         # cv2.imshow('HLS_image_without_lightness_thresh',HLS_image_without_lightness_thresh)
@@ -122,6 +196,71 @@ class pcl_preprocesser(object):
         # print(np.shape(HLS_image[:,:,1]>150))
         # print(HLS_image[:,:,1]>150)
 
+        ##############3 tests on depth ######################### https://docs.scipy.org/doc/scipy-0.14.0/reference/ndimage.html
+         # the idea is to do a dilation prioritizing the closest branches, therefore we must pass in inverse world.
+         # to avoid the background to be the max value we place them at -10 meters when we do morphological operations.
+         # When we want to visualize we need to convert back!
+        depth_image_tests[depth_image_tests >1500]=0
+        depth_image_tests[depth_image_tests <350]=0
+
+
+        kernel_dil=(9,9)
+        kernel_erosion=(5,5)
+        kernel_blur=(11,11)
+        # blur on "normal image"
+        blur_im = cv2.GaussianBlur(depth_image_tests, (11,11),1)
+        # cv_image_norm = cv2.normalize(blur_im, None, 0, 255, cv2.NORM_MINMAX)
+        # cv2.imshow('blur_im',cv_image_norm.astype(np.uint8))
+
+        # blur_im[blur_im >1500]=10000
+        # blur_im[blur_im <350]=10000
+        # blur_im=-1*blur_im
+
+        # grey closing prioritizing closest plants
+        # grey_clos=scind.grey_closing(blur_im,kernel)
+        # cv_image_norm = cv2.normalize(grey_clos, None, 0, 255, cv2.NORM_MINMAX)
+        # cv2.imshow('grey_clos',cv_image_norm.astype(np.uint8))
+
+
+        # three dilations for improving plant connections prioritizing closest plants
+        # grey_dil_1=scind.grey_dilation(grey_clos,kernel)
+        grey_dil_1=scind.grey_dilation(depth_image_tests,kernel_dil)
+        grey_dil_1=scind.grey_erosion(grey_dil_1,kernel_erosion)
+        grey_dil_1[HLS_image[:,:,1]>lightness_thresh]=0
+        # grey_dil_1 = cv2.GaussianBlur(grey_dil_1, kernel_blur,1)
+        # cv_image_norm = cv2.normalize(grey_dil_1, None, 0, 255, cv2.NORM_MINMAX)
+        # cv2.imshow('grey_dil_1',cv_image_norm.astype(np.uint8))
+
+
+        grey_dil_2=scind.grey_dilation(grey_dil_1,kernel_dil)
+        grey_dil_2=scind.grey_erosion(grey_dil_2,kernel_erosion)
+        grey_dil_2[HLS_image[:,:,1]>lightness_thresh]=0
+        # grey_dil_2 = cv2.GaussianBlur(grey_dil_2, kernel_blur,1)
+        # cv_image_norm = cv2.normalize(grey_dil_2, None, 0, 255, cv2.NORM_MINMAX)
+        # cv2.imshow('grey_dil_2',cv_image_norm.astype(np.uint8))
+
+        grey_dil_3=scind.grey_dilation(grey_dil_2,kernel_dil)
+        grey_dil_3=scind.grey_erosion(grey_dil_3,kernel_erosion)
+        grey_dil_3[HLS_image[:,:,1]>lightness_thresh]=0
+        # grey_dil_3 = cv2.GaussianBlur(grey_dil_3, kernel_blur,1)
+        # cv_image_norm = cv2.normalize(grey_dil_3, None, 0, 255, cv2.NORM_MINMAX)
+        # cv2.imshow('grey_dil_3',cv_image_norm.astype(np.uint8))
+
+        grey_dil_4=scind.grey_dilation(grey_dil_3,kernel_dil)
+        grey_dil_4=scind.grey_erosion(grey_dil_4,kernel_erosion)
+        grey_dil_4[HLS_image[:,:,1]>lightness_thresh]=0
+        # grey_dil_4 = cv2.GaussianBlur(grey_dil_4, kernel_blur,1)
+        # cv_image_norm = cv2.normalize(grey_dil_4, None, 0, 255, cv2.NORM_MINMAX)
+        # cv2.imshow('grey_dil_4',cv_image_norm.astype(np.uint8))
+#########################################3 creation of mask plant from color images
+
+
+
+
+
+
+
+
 
         #depth_image_rect_copy[np.invert(HLS_image_without_lightness_bool)]=0 # removing lightness points
 
@@ -133,8 +272,11 @@ class pcl_preprocesser(object):
 
         depth_image_rect_copy[HLS_image[:,:,1]>lightness_thresh]=0 # removing lightness points
         # depth_image_rect_copy[np.invert(brown_color_filter)]=0 # removing color rgb
-        #depth_image_rect_copy[np.invert(blue_color_filter)]=0 # removing color rgb
+        # depth_image_rect_copy[np.invert(blue_color_filter)]=0 # removing color rgb
 
+        #################33 Testing grey_dil_4
+        depth_image_rect_copy = np.copy(grey_dil_4)
+        # depth_image_rect_copy[HLS_image[:,:,1]>lightness_thresh]=0
 
 
 
