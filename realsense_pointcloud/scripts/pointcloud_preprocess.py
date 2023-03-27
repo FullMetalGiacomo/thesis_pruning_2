@@ -6,6 +6,7 @@ import math
 import cv2
 from matplotlib import pyplot as plt
 import rospy
+import time
 # import open3d as o3d
 from sensor_msgs.msg import Image, CameraInfo, CompressedImage
 from std_msgs.msg import Float64MultiArray
@@ -25,6 +26,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import scipy.ndimage as scind
 
 # roslaunch realsense2_camera rs_camera.launch align_depth:=true mode:=manualcolor_fps:=15 color_width:=1280 color_height:=720 depth_fps:=15 depth_width:=1280 depth_height:=720 enable_pointcloud:=True flters:=spatial,temporal,hole_filling,decimation,disparity
+
 
 class pcl_preprocesser(object):
     def __init__(self):
@@ -57,6 +59,10 @@ class pcl_preprocesser(object):
     #     # print(self.cropParam)
     #     return config
 
+
+    # def fnc(self,buffer):
+    #     return np.nanmean(np.true_divide(buffer,(buffer!=0)))
+
     def reading_callback(self,color_image_rect, depth_image_rect):
     # Solve all of perception here...
         ################################################# READING
@@ -88,47 +94,53 @@ class pcl_preprocesser(object):
         # cv2.imshow('HLS_image',HLS_image)
         # cv2.waitKey(0)
         HLS_image_without_lightness = cv2.inRange(HLS_image[:,:,1], lightness_thresh, 255)
-        cv2.imshow('HLS_image_whithout_lightness',HLS_image_without_lightness)
+        # cv2.imshow('HLS_image_whithout_lightness',HLS_image_without_lightness)
+
+
         # cv2.waitKey(0)
         #############################3 check on brown color filters
         r=242
         g=222
         b=130
+        color_image_rect_copy=np.copy(color_image_rect)
+        color_image_rect_copy[:,:,0]=color_image_rect[:,:,2]
+        color_image_rect_copy[:,:,2]=color_image_rect[:,:,0]
+        # cv2.imshow('color_image_rect_copy_color',color_image_rect_copy)
+
+        color_image_rect_copy[np.invert((color_image_rect_copy[:,:,0]<r) & (color_image_rect_copy[:,:,1]<g) & (color_image_rect_copy[:,:,2]<b))]=0
+        # cv2.imshow('color_image_rect_copy',color_image_rect_copy)
+        gray_im = cv2.cvtColor(color_image_rect_copy, cv2.COLOR_RGB2GRAY)
+        ret,im_bin = cv2.threshold(gray_im,1,255,cv2.THRESH_BINARY_INV)
+        # cv2.imshow('im_bin',im_bin)
+        im_bin=im_bin.astype('bool')
+
         # b=120
         ## rgb rbg bgr brg gbr grb
         # rgb
-        brown_color_filter_1=((color_image_rect[:,:,0]<r) & (color_image_rect[:,:,1]<g) & (color_image_rect[:,:,2]<b))
-        gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
-        gray_im[np.invert(brown_color_filter_1)]=0
-        cv2.imshow('brown_color_filter_1',gray_im)
-        # rbg
-        brown_color_filter_2=((color_image_rect[:,:,0]<r) & (color_image_rect[:,:,1]<g) & (color_image_rect[:,:,2]<b))
-        gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
-        gray_im[np.invert(brown_color_filter_2)]=0
-        cv2.imshow('brown_color_filter_2',gray_im)
-        # bgr
-        brown_color_filter_3=((color_image_rect[:,:,0]<g) & (color_image_rect[:,:,1]<b) & (color_image_rect[:,:,2]<r))
-        gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
-        gray_im[np.invert(brown_color_filter_3)]=0
-        cv2.imshow('brown_color_filter_3',gray_im)
-        # brg
-        brown_color_filter_4=((color_image_rect[:,:,0]<g) & (color_image_rect[:,:,1]<r) & (color_image_rect[:,:,2]<b))
-        gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
-        gray_im[np.invert(brown_color_filter_4)]=0
-        cv2.imshow('brown_color_filter_4',gray_im)
-        # gbr
-        brown_color_filter_5=((color_image_rect[:,:,0]<b) & (color_image_rect[:,:,1]<g) & (color_image_rect[:,:,2]<r))
-
-        # grb
-        brown_color_filter_6=((color_image_rect[:,:,0]<b) & (color_image_rect[:,:,1]<r) & (color_image_rect[:,:,2]<g))
-
-
-        brown_color_filter= (brown_color_filter_1) & (brown_color_filter_2) & brown_color_filter_3 & brown_color_filter_4 & brown_color_filter_5 & brown_color_filter_6
-        gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
-        blur_im = cv2.GaussianBlur(gray_im, (3,3),1)
-        blur_im[np.invert(brown_color_filter)]=0
-        cv2.imshow('whole_filter',blur_im)
-        cv2.waitKey(0)
+        # brown_color_filter_1=((color_image_rect[:,:,0]<r) & (color_image_rect[:,:,1]<g) & (color_image_rect[:,:,2]<b))
+        #
+        # # rbg
+        # brown_color_filter_2=((color_image_rect[:,:,0]<r) & (color_image_rect[:,:,1]<g) & (color_image_rect[:,:,2]<b))
+        #
+        # # bgr
+        # brown_color_filter_3=((color_image_rect[:,:,0]<g) & (color_image_rect[:,:,1]<b) & (color_image_rect[:,:,2]<r))
+        #
+        # # brg
+        # brown_color_filter_4=((color_image_rect[:,:,0]<g) & (color_image_rect[:,:,1]<r) & (color_image_rect[:,:,2]<b))
+        #
+        # # gbr
+        # brown_color_filter_5=((color_image_rect[:,:,0]<b) & (color_image_rect[:,:,1]<g) & (color_image_rect[:,:,2]<r))
+        #
+        # # grb
+        # brown_color_filter_6=((color_image_rect[:,:,0]<b) & (color_image_rect[:,:,1]<r) & (color_image_rect[:,:,2]<g))
+        #
+        #
+        # brown_color_filter= (brown_color_filter_1) & (brown_color_filter_2) & brown_color_filter_3 & brown_color_filter_4 & brown_color_filter_5 & brown_color_filter_6
+        # gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
+        # blur_im = cv2.GaussianBlur(gray_im, (3,3),1)
+        # blur_im[np.invert(brown_color_filter)]=0
+        # cv2.imshow('whole_filter',blur_im)
+        # cv2.waitKey(0)
 
         ########### blue?
 
@@ -209,6 +221,7 @@ class pcl_preprocesser(object):
         kernel_blur=(11,11)
         # blur on "normal image"
         blur_im = cv2.GaussianBlur(depth_image_tests, (11,11),1)
+        depth_image_tests[im_bin]=0
         # cv_image_norm = cv2.normalize(blur_im, None, 0, 255, cv2.NORM_MINMAX)
         # cv2.imshow('blur_im',cv_image_norm.astype(np.uint8))
 
@@ -224,9 +237,18 @@ class pcl_preprocesser(object):
 
         # three dilations for improving plant connections prioritizing closest plants
         # grey_dil_1=scind.grey_dilation(grey_clos,kernel)
+        # start_time = time.time()
+        # grey_test=scind.generic_filter(depth_image_tests, self.fnc ,size=5)
+        # checkpoint_hough = str((time.time() - start_time)) # 0.1
+        # rospy.loginfo("generic filter time")
+        # rospy.loginfo(checkpoint_hough)
+        # cv_image_norm = cv2.normalize(grey_test, None, 0, 255, cv2.NORM_MINMAX)
+        # cv2.imshow('grey_test',cv_image_norm.astype(np.uint8))
+
+
         grey_dil_1=scind.grey_dilation(depth_image_tests,kernel_dil)
         grey_dil_1=scind.grey_erosion(grey_dil_1,kernel_erosion)
-        grey_dil_1[HLS_image[:,:,1]>lightness_thresh]=0
+        grey_dil_1[im_bin]=0
         # grey_dil_1 = cv2.GaussianBlur(grey_dil_1, kernel_blur,1)
         # cv_image_norm = cv2.normalize(grey_dil_1, None, 0, 255, cv2.NORM_MINMAX)
         # cv2.imshow('grey_dil_1',cv_image_norm.astype(np.uint8))
@@ -234,24 +256,25 @@ class pcl_preprocesser(object):
 
         grey_dil_2=scind.grey_dilation(grey_dil_1,kernel_dil)
         grey_dil_2=scind.grey_erosion(grey_dil_2,kernel_erosion)
-        grey_dil_2[HLS_image[:,:,1]>lightness_thresh]=0
+        grey_dil_2[im_bin]=0
         # grey_dil_2 = cv2.GaussianBlur(grey_dil_2, kernel_blur,1)
         # cv_image_norm = cv2.normalize(grey_dil_2, None, 0, 255, cv2.NORM_MINMAX)
         # cv2.imshow('grey_dil_2',cv_image_norm.astype(np.uint8))
 
         grey_dil_3=scind.grey_dilation(grey_dil_2,kernel_dil)
         grey_dil_3=scind.grey_erosion(grey_dil_3,kernel_erosion)
-        grey_dil_3[HLS_image[:,:,1]>lightness_thresh]=0
+        grey_dil_3[im_bin]=0
         # grey_dil_3 = cv2.GaussianBlur(grey_dil_3, kernel_blur,1)
         # cv_image_norm = cv2.normalize(grey_dil_3, None, 0, 255, cv2.NORM_MINMAX)
         # cv2.imshow('grey_dil_3',cv_image_norm.astype(np.uint8))
 
         grey_dil_4=scind.grey_dilation(grey_dil_3,kernel_dil)
         grey_dil_4=scind.grey_erosion(grey_dil_4,kernel_erosion)
-        grey_dil_4[HLS_image[:,:,1]>lightness_thresh]=0
+        grey_dil_4[im_bin]=0
         # grey_dil_4 = cv2.GaussianBlur(grey_dil_4, kernel_blur,1)
-        # cv_image_norm = cv2.normalize(grey_dil_4, None, 0, 255, cv2.NORM_MINMAX)
+        cv_image_norm = cv2.normalize(grey_dil_4, None, 0, 255, cv2.NORM_MINMAX)
         # cv2.imshow('grey_dil_4',cv_image_norm.astype(np.uint8))
+        # cv2.waitKey(0)
 #########################################3 creation of mask plant from color images
 
 
@@ -270,7 +293,7 @@ class pcl_preprocesser(object):
         # reduces effect of infrared
         #blue_color_filter=((color_image_rect[:,:,0]<60) & (color_image_rect[:,:,1]<150) & (color_image_rect[:,:,2]<255)) # selecting blues
 
-        depth_image_rect_copy[HLS_image[:,:,1]>lightness_thresh]=0 # removing lightness points
+        # depth_image_rect_copy[im_bin]=0 # removing lightness points
         # depth_image_rect_copy[np.invert(brown_color_filter)]=0 # removing color rgb
         # depth_image_rect_copy[np.invert(blue_color_filter)]=0 # removing color rgb
 

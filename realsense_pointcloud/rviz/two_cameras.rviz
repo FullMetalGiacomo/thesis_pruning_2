@@ -10,7 +10,7 @@ Panels:
         - /TF1/Frames1
         - /PointCloud215
       Splitter Ratio: 0.8294117450714111
-    Tree Height: 336
+    Tree Height: 190
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -727,150 +727,6 @@ Visualization Manager:
           camera_0_depth_frame:
             camera_0_depth_optical_frame:
               {}
-        map:
-          odom:
-            base_footprint:
-              base_cover_link:
-                {}
-              base_link:
-                base_antenna_left_link:
-                  {}
-                base_antenna_right_link:
-                  {}
-                base_imu_link:
-                  {}
-                base_laser_link:
-                  {}
-                base_mic_back_left_link:
-                  {}
-                base_mic_back_right_link:
-                  {}
-                base_mic_front_left_link:
-                  {}
-                base_mic_front_right_link:
-                  {}
-                base_sonar_01_link:
-                  {}
-                base_sonar_02_link:
-                  {}
-                base_sonar_03_link:
-                  {}
-                caster_back_left_1_link:
-                  caster_back_left_2_link:
-                    {}
-                caster_back_right_1_link:
-                  caster_back_right_2_link:
-                    {}
-                caster_front_left_1_link:
-                  caster_front_left_2_link:
-                    {}
-                caster_front_right_1_link:
-                  caster_front_right_2_link:
-                    {}
-                suspension_left_link:
-                  wheel_left_link:
-                    {}
-                suspension_right_link:
-                  wheel_right_link:
-                    {}
-                torso_fixed_column_link:
-                  {}
-                torso_fixed_link:
-                  torso_lift_link:
-                    arm_left_1_link:
-                      arm_left_2_link:
-                        arm_left_3_link:
-                          arm_left_4_link:
-                            arm_left_5_link:
-                              arm_left_6_link:
-                                arm_left_7_link:
-                                  arm_left_tool_link:
-                                    wrist_left_ft_link:
-                                      wrist_left_ft_tool_link:
-                                        gripper_left_link:
-                                          gripper_left_grasping_frame:
-                                            {}
-                                          gripper_left_left_finger_link:
-                                            {}
-                                          gripper_left_right_finger_link:
-                                            {}
-                                        gripper_left_tool_link:
-                                          {}
-                    arm_right_1_link:
-                      arm_right_2_link:
-                        arm_right_3_link:
-                          arm_right_4_link:
-                            arm_right_5_link:
-                              arm_right_6_link:
-                                arm_right_7_link:
-                                  arm_right_tool_link:
-                                    wrist_right_ft_link:
-                                      wrist_right_ft_tool_link:
-                                        hand_right_palm_link:
-                                          hand_right_grasping_frame:
-                                            {}
-                                          hand_right_index_abd_link:
-                                            hand_right_index_virtual_1_link:
-                                              hand_right_index_flex_1_link:
-                                                hand_right_index_virtual_2_link:
-                                                  hand_right_index_flex_2_link:
-                                                    hand_right_index_virtual_3_link:
-                                                      hand_right_index_flex_3_link:
-                                                        {}
-                                          hand_right_index_link:
-                                            {}
-                                          hand_right_little_abd_link:
-                                            hand_right_little_virtual_1_link:
-                                              hand_right_little_flex_1_link:
-                                                hand_right_little_virtual_2_link:
-                                                  hand_right_little_flex_2_link:
-                                                    hand_right_little_virtual_3_link:
-                                                      hand_right_little_flex_3_link:
-                                                        {}
-                                          hand_right_middle_abd_link:
-                                            hand_right_middle_virtual_1_link:
-                                              hand_right_middle_flex_1_link:
-                                                hand_right_middle_virtual_2_link:
-                                                  hand_right_middle_flex_2_link:
-                                                    hand_right_middle_virtual_3_link:
-                                                      hand_right_middle_flex_3_link:
-                                                        {}
-                                          hand_right_mrl_link:
-                                            {}
-                                          hand_right_ring_abd_link:
-                                            hand_right_ring_virtual_1_link:
-                                              hand_right_ring_flex_1_link:
-                                                hand_right_ring_virtual_2_link:
-                                                  hand_right_ring_flex_2_link:
-                                                    hand_right_ring_virtual_3_link:
-                                                      hand_right_ring_flex_3_link:
-                                                        {}
-                                          hand_right_thumb_abd_link:
-                                            hand_right_thumb_virtual_1_link:
-                                              hand_right_thumb_flex_1_link:
-                                                hand_right_thumb_virtual_2_link:
-                                                  hand_right_thumb_flex_2_link:
-                                                    {}
-                                          hand_right_thumb_link:
-                                            {}
-                                        hand_right_safety_box:
-                                          {}
-                                        hand_right_tool_link:
-                                          {}
-                    head_1_link:
-                      head_2_link:
-                        xtion_link:
-                          xtion_optical_frame:
-                            {}
-                          xtion_orbbec_aux_joint_frame:
-                            xtion_rgb_frame:
-                              xtion_depth_frame:
-                                xtion_depth_optical_frame:
-                                  {}
-                              xtion_rgb_optical_frame:
-                                {}
-              rgbd_laser_link:
-                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -883,14 +739,14 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: ""
+      Color Transformer: Intensity
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
       Name: PointCloud2
-      Position Transformer: ""
+      Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
@@ -929,7 +785,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.7776107788085938
+      Distance: 2.024244785308838
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -937,27 +793,27 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.0378835201263428
-        Y: 0.20281390845775604
-        Z: 1.5772234201431274
+        X: 0.24297961592674255
+        Y: 0.016460595652461052
+        Z: 0.7315728068351746
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.16479632258415222
+      Pitch: -1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 3.320441961288452
+      Yaw: 4.460445880889893
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1013
+  Height: 750
   Hide Left Dock: false
   Hide Right Dock: false
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000015600000357fc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000001d3000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650100000216000000b20000001600fffffffb0000000a0049006d00610067006501000002ce000000c60000001600ffffff000000010000010f00000363fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000363000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000006900000003efc0100000002fb0000000800540069006d0065010000000000000690000003bc00fffffffb0000000800540069006d00650100000000000004500000000000000000000005340000035700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000015600000250fc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d00000141000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006501000001840000007b0000001600fffffffb0000000a0049006d0061006700650100000205000000880000001600ffffff000000010000010f00000363fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000363000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004ec0000003efc0100000002fb0000000800540069006d00650100000000000004ec000003bc00fffffffb0000000800540069006d00650100000000000004500000000000000000000003900000025000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -966,6 +822,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1680
-  X: 0
-  Y: 0
+  Width: 1260
+  X: 1998
+  Y: 172
