@@ -88,20 +88,14 @@
     </node>
 
 
-    <!-- ##### cropper -->
-    <node name="cropper" pkg="realsense_pointcloud" type="crop.py" output="screen" >
+
+    <!-- ##### gem detector -->
+    <node name="gem_detector_node_1" pkg="realsense_pointcloud" type="gem_detector.py" output="screen" >
       <!-- input -->
       <remap from="/camera/color/image_raw" to="/camera_1/color/image_raw"/>
       <remap from="/camera/aligned_depth_to_color/image_raw" to="/camera_1/aligned_depth_to_color/image_raw"/>
-      <!-- Output -->
-      <!-- <remap from="/rgb_crop" to="/rgb_crop_1"/> -->
-    </node>
+      <remap from="/camera/color/camera_info" to="/camera_1/color/camera_info"/>
 
-    <!-- ##### gem detector -->
-    <node name="gem_detector_node" pkg="realsense_pointcloud" type="gem_detector.py" output="screen" >
-      <!-- input -->
-      <!-- <remap from="/camera/color/image_raw" to="/camera_1/color/image_raw"/>
-      <remap from="/camera/aligned_depth_to_color/image_raw" to="/camera_1/aligned_depth_to_color/image_raw"/> -->
       <!-- Output -->
       <!-- <remap from="/rgb_crop" to="/rgb_crop_1"/> -->
     </node>
@@ -323,10 +317,8 @@ region_color_threshold: 50
 min_cluster_size: 200
 </rosparam>
 </node>
-
-
-<node type="rviz" name="rviz" pkg="rviz" args="-d $(find realsense_pointcloud)/rviz/two_cameras.rviz" >
-</node>
+<!-- <node type="rviz" name="rviz" pkg="rviz" args="-d $(find realsense_pointcloud)/rviz/two_cameras.rviz" > -->
+<!-- </node> -->
 
 
 </launch>

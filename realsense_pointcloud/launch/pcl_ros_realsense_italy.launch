@@ -194,7 +194,7 @@ min_cluster_size: 200
   <param name="sensor_model/max_range" value="3.0" />
 </node> -->
 
-<node type="rviz" name="rviz" pkg="rviz" args="-d $(find realsense_pointcloud)/rviz/test_realsense.rviz" />
+<!-- <node type="rviz" name="rviz" pkg="rviz" args="-d $(find realsense_pointcloud)/rviz/test_realsense.rviz" /> -->
 
 
 </launch>
