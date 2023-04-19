@@ -757,7 +757,6 @@ class cable_preprocesser(object):
         depth_image_rect = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
         cam_inf=rospy.wait_for_message("/camera/color/camera_info", CameraInfo)
         self.K=cam_inf.K
-        rospy.logerr
         ts = message_filters.TimeSynchronizer([color_image_rect, depth_image_rect], 10)
 
         ts.registerCallback(self.reading_callback)

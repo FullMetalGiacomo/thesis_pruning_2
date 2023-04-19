@@ -41,7 +41,7 @@ class gem_detector(object):
         # Publishers
         self.rgb_pub = rospy.Publisher('/gems_rgb_image',  Image, queue_size=1)
         self.depth_map_pub = rospy.Publisher('/gems_depth_image',  Image, queue_size=1)
-        self.crop_par=rospy.Publisher('/cutting_pose',PoseStamped, queue_size=1)
+        self.pruning_point=rospy.Publisher('/pruning_point_pose',PoseStamped, queue_size=1)
         # Subscribers
 
     def get_point(self):
@@ -63,9 +63,14 @@ class gem_detector(object):
 
         ## rosbag 2
         #red band
-        self.u= 500
-        self.v= 260
-
+        # self.u= 910
+        # self.v= 230
+        #red band
+        # self.u= 1050
+        # self.v= 210
+        #red band
+        self.u= 770
+        self.v= 320
 
         ## rosbag3
         #far point
@@ -115,6 +120,7 @@ class gem_detector(object):
     def reading_callback(self, color_image_rect, depth_image_rect):
         # rospy.loginfo("""Reconfigure Request: {left_crop_param}, {right_crop_param},{top_crop_param}, {bottom_crop_param}""".format(**config))
         ################################################# READING
+        img_header=color_image_rect.header
         color_image_rect=np.frombuffer(color_image_rect.data, dtype=np.uint8).reshape(color_image_rect.height, color_image_rect.width, -1)
         depth_image_rect=np.frombuffer(depth_image_rect.data, dtype=np.uint16).reshape(depth_image_rect.height, depth_image_rect.width)
         depth_image_rect_copy=np.copy(depth_image_rect)
@@ -149,7 +155,7 @@ class gem_detector(object):
         b=130
         # crop_img[np.invert((crop_img[:,:,0]<b) & (crop_img[:,:,1]<g) & (crop_img[:,:,2]<r))]=0 # Segmenting by color
         HLS_image = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HLS_FULL)
-        lightness_thresh=100;
+        lightness_thresh=100
         crop_img[HLS_image[:,:,1]>lightness_thresh]=0        # Segmenting by light
         gray_im = cv2.cvtColor(crop_img, cv2.COLOR_RGB2GRAY)
         ret,im_bin = cv2.threshold(gray_im,1,255,cv2.THRESH_BINARY)
@@ -354,8 +360,8 @@ class gem_detector(object):
         # rotate the elliptical kernel perpendicular to the branch
         # bin_mask_1 = cv2.morphologyEx(bin_mask, cv2.MORPH_CLOSE, kernel) # closing with elliptical kernel
         # bin_mask_1= cv2.dilate(bin_mask_1, kernel,iterations=1)
-
-        skeleton = skeletonize(bin_mask).astype(np.uint8) # using scipy function
+        print(bin_mask)
+        skeleton = skeletonize(bin_mask.astype('bool')).astype(np.uint8) # using scipy function
         skeleton=np.array(skeleton)*255
         pixelpointsCV2 = np.array(cv2.findNonZero(skeleton))
         u_vector=pixelpointsCV2[:,0,0]
@@ -364,7 +370,7 @@ class gem_detector(object):
 
         a_deg=-np.arctan(a)*180/np.pi # rotation of branch
         # kernel=cv2.dilate(kernel.astype(np.uint8), kernel_1,iterations=1)
-        kernel= cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(11,5))
+        kernel= cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(11,3))
         kernel_1= cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
         kernel[kernel==255]=1
         kernel_rotated=scind.rotate(kernel.astype(np.uint8),int(a_deg),reshape=True)
@@ -459,6 +465,85 @@ class gem_detector(object):
         crop_img_viewer=cv2.resize(overlapped_clean, (700,700), interpolation = cv2.INTER_AREA)
         cv2.imshow("overlapped_clean",crop_img_viewer.astype(np.uint8))
         cv2.waitKey(0)
+#####################3 Selecting Middle point!
+        ## chose the two points closest to the image center!
+        print(clean_coords.shape)
+        if clean_coords.shape[0]==1:
+            rospy.logerr("Not Enough Gems Found !!!!!!!!!!!!")
+        elif clean_coords.shape[0]==2:
+            chosen_gems=np.copy(clean_coords)
+        else:
+            distance_vector=np.sqrt((clean_coords[:,0]-self.radius)*(clean_coords[:,0]-self.radius) + (clean_coords[:,1]-self.radius)*(clean_coords[:,1]-self.radius))
+            k = 2 # top2 values
+            idx_gems = np.argpartition(distance_vector, k)
+            chosen_gems=clean_coords[idx_gems[:k]]
+
+
+
+
+        img = np.copy(color_mask)
+        for point in chosen_gems:
+            cv2.circle(img,tuple(point),2,(0,0,255),-1)
+
+        crop_img_viewer=cv2.resize(img, (700,700), interpolation = cv2.INTER_AREA)
+        cv2.imshow("selected_gems",crop_img_viewer.astype(np.uint8))
+        cv2.waitKey(0)
+
+        ## place cutting point in the middle and on skeleton
+        mean_u=int(np.mean(chosen_gems[:,0]))
+        mean_v=int(np.mean(chosen_gems[:,1]))
+        cutting_point=np.array([mean_u,mean_v])
+        print(cutting_point)
+        corrected_cutting_point=np.squeeze(self.find_nearest_white(skeleton,cutting_point))
+        print(corrected_cutting_point)
+
+        img = np.copy(color_mask)
+        cv2.circle(img,tuple(cutting_point),2,(0,0,255),-1)
+        crop_img_viewer=cv2.resize(img, (700,700), interpolation = cv2.INTER_AREA)
+        cv2.imshow("selected_cutting_point",crop_img_viewer.astype(np.uint8))
+
+        img = np.copy(color_mask)
+        cv2.circle(img,tuple(corrected_cutting_point),2,(0,0,255),-1)
+        crop_img_viewer=cv2.resize(img, (700,700), interpolation = cv2.INTER_AREA)
+        cv2.imshow("selected corrected cutting point",crop_img_viewer.astype(np.uint8))
+
+        cv2.waitKey(0)
+#####################3 Build 3D point
+        ## bring point into img coordinates
+        corrected_cutting_point[0]=corrected_cutting_point[0]+self.u -self.radius
+        corrected_cutting_point[1]=corrected_cutting_point[1]+self.v-self.radius
+        ## find distance of point
+        inv_bin_mask=cv2.bitwise_not(bin_mask)
+        crop_img_depth[inv_bin_mask.astype('bool')]=0
+        trues=(crop_img_depth != 0)
+        depth_vector=crop_img_depth[trues]
+        mean_dist=depth_vector.mean()/1000
+        ## transform in x y
+
+        img = np.copy(color_image_rect)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        cv2.circle(img,tuple(corrected_cutting_point),2,(0,0,255),-1)
+        cv2.imshow("selected corrected cutting point",img.astype(np.uint8))
+        cv2.waitKey(0)
+################# Publish point
+        x= (mean_dist/self.K[0])*(corrected_cutting_point[0]-self.K[2])
+        y= (mean_dist/self.K[4])*(corrected_cutting_point[1]-self.K[5])
+        print(x)
+        print(y)
+        print(mean_dist)
+        point=PoseStamped()
+
+        point.header = img_header
+        point.pose.orientation.x = 0.0
+        point.pose.orientation.y = 0.0
+        point.pose.orientation.z = 0.0
+        point.pose.orientation.w = 1.0
+
+        point.pose.position.x = x
+        point.pose.position.y = y
+        point.pose.position.z = mean_dist
+        self.pruning_point.publish(point)
+
 #####################3 testing on full image
 
 #         HLS_image = cv2.cvtColor(color_image_rect_copy, cv2.COLOR_BGR2HLS_FULL)
@@ -593,6 +678,12 @@ class gem_detector(object):
         return points_to_keep
 
 
+    def find_nearest_white(self,img, target):
+        nonzero = cv2.findNonZero(img)
+        distances = np.sqrt((nonzero[:,:,0] - target[0]) ** 2 + (nonzero[:,:,1] - target[1]) ** 2)
+        nearest_index = np.argmin(distances)
+        return nonzero[nearest_index]
+
     def rgb_callback(self, data):
         # image=np.frombuffer(data.data, dtype=np.uint8).reshape(data.height, data.width, -1)
         image = np.fromstring(data.data, np.uint8)
@@ -619,31 +710,6 @@ class gem_detector(object):
 
         self.rgb_pub.publish(self.imgmsg)
 
-    def depth_callback(self, data):
-        image=np.frombuffer(data.data, dtype=np.uint8).reshape(data.height, data.width, -1)
-        xl=int(data.width*self.cropParam[3])
-        xr=int(data.width-data.width*self.cropParam[1])
-        yu=int(data.height*self.cropParam[0])
-        yd=int(data.height - data.height*self.cropParam[2])
-        # image = np.fromstring(data.data, np.uint8)
-        # rospy.logwarn(np.shape(data.data))
-        # image = cv2.imdecode(image, cv2.IMREAD_GRAYSCALE)
-        # h, w=np.shape(image)
-        #
-        # xl=int(w*self.cropParam[3])
-        # xr=int(w-w*self.cropParam[1])
-        # yu=int(h*self.cropParam[0])
-        # yd=int(h - h*self.cropParam[2])
-        image=image[yu:yd,xl:xr,:]
-        # print(image.shape)
-        self.imgmsg_d = Image()
-        self.imgmsg_d.data = image.flatten().tolist()
-        self.imgmsg_d.height=image.shape[0]
-        self.imgmsg_d.width=image.shape[1]
-        self.imgmsg_d.encoding="16UC1"
-        self.imgmsg_d.step=len(self.imgmsg_d.data) // self.imgmsg_d.height
-
-        self.depth_map_pub.publish(self.imgmsg_d)
 
     def start(self):
         rospy.loginfo("gem_detector_is_starting ...")
@@ -652,6 +718,7 @@ class gem_detector(object):
         color_image_rect = message_filters.Subscriber('/camera/color/image_raw', Image)
         depth_image_rect = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
         cam_inf=rospy.wait_for_message("/camera/color/camera_info", CameraInfo)
+        self.K=cam_inf.K
         ts = message_filters.TimeSynchronizer([color_image_rect, depth_image_rect], 10)
 
         ts.registerCallback(self.reading_callback)

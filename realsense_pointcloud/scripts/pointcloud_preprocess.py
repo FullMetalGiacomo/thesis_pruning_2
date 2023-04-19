@@ -75,7 +75,16 @@ class pcl_preprocesser(object):
         ################################################# PLANT SEGMENTATION
         # light removal and experiments on adaptive light threshold ( gone bad because of infrared )
         HLS_image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2HLS_FULL)
+        histr = cv2.calcHist(HLS_image[:,:,1], [0], None, [256], (0,255)) # getting histogram of lightness
+        #  Probability distribution
 
+        # plt.figure() # Create new figure for the histogram plot
+        # plt.plot(histr)
+        # plt.show()
+        P = histr/sum(histr);
+        w = np.cumsum(P);
+        w[w>0.1]=0 # cutting at 10% lightness
+        idx=np.argmax(w)
 
         #
         # gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
@@ -88,16 +97,19 @@ class pcl_preprocesser(object):
         # cv2.imshow(str(T),binarized_im_1)
 
         # lightness_thresh=0.85*T;
-        lightness_thresh=100;
+        lightness_thresh=int(idx)
+        if int(idx)>100:
+            lightness_thresh=100
+
         # HSL_MinLight = np.array([0,  0, 0],np.uint8)
         # HSL_MaxLight = np.array([255, lightness_thresh, 255],np.uint8)
         # cv2.imshow('HLS_image',HLS_image)
         # cv2.waitKey(0)
-        HLS_image_without_lightness = cv2.inRange(HLS_image[:,:,1], lightness_thresh, 255)
+        # HLS_image_without_lightness = cv2.inRange(HLS_image[:,:,1], lightness_thresh, 255)
         # cv2.imshow('HLS_image_whithout_lightness',HLS_image_without_lightness)
 
 
-        # cv2.waitKey(0)
+        cv2.waitKey(0)
         #############################3 check on brown color filters
         r=242
         g=222
@@ -298,8 +310,8 @@ class pcl_preprocesser(object):
         # depth_image_rect_copy[np.invert(blue_color_filter)]=0 # removing color rgb
 
         #################33 Testing grey_dil_4
-        depth_image_rect_copy = np.copy(grey_dil_4)
-        # depth_image_rect_copy[HLS_image[:,:,1]>lightness_thresh]=0
+        # depth_image_rect_copy = np.copy(grey_dil_4)
+        depth_image_rect_copy[HLS_image[:,:,1]>lightness_thresh]=0
 
 
 
