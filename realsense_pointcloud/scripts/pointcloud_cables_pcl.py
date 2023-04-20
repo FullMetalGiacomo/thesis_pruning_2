@@ -29,6 +29,7 @@ from skspatial.plotting import plot_3d
 from numpy.linalg import multi_dot
 
 from sensor_msgs import point_cloud2
+from skimage.morphology import medial_axis, skeletonize
 
 # roslaunch realsense2_camera rs_camera.launch align_depth:=true mode:=manualcolor_fps:=15 color_width:=1280 color_height:=720 depth_fps:=15 depth_width:=1280 depth_height:=720 enable_pointcloud:=True flters:=spatial,temporal,hole_filling,decimation,disparity
 
@@ -72,7 +73,6 @@ class cable_preprocesser(object):
     #     # print(self.cropParam)
     #     return config
 
-
     def pixels_to_camera_coord(self,K,u,v,z):
         # K enters in the linearized form: (fx,0,ox,0,fy,oy,0,0,1)
         x= (z/K[0])*(u-K[2])
@@ -87,27 +87,46 @@ class cable_preprocesser(object):
         color_image_rect=np.frombuffer(color_image_rect.data, dtype=np.uint8).reshape(color_image_rect.height, color_image_rect.width, -1)
         depth_image_rect_copy=np.frombuffer(depth_image_rect.data, dtype=np.uint16).reshape(depth_image_rect.height, depth_image_rect.width)
         depth_image_rect_copy_cables=np.copy(depth_image_rect_copy)
-
+        color_image_rect_copy=np.copy(color_image_rect)
+        color_image_rect_copy = cv2.cvtColor(color_image_rect_copy, cv2.COLOR_BGR2RGB)
+        cv2.imshow('color_image_rect_copy',color_image_rect_copy)
+        cv2.waitKey(0)
         HLS_image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2HLS_FULL)
 
         ################################################# CABLES SEGMENTATION https://docs.opencv.org/3.4/d9/db0/tutorial_hough_lines.html
         lightness_thresh_cables=150
         depth_image_rect_copy_cables[HLS_image[:,:,1]>lightness_thresh_cables]=0
 
+
+
+
         ################ image processing to get best thinned image
         # ret,gray_im = cv2.threshold(color_image_rect,127,255,cv2.THRESH_BINARY)
         # cv2.imshow('color_image_rect',color_image_rect)
         gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
+        gray_im_plant = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
         # cv2.imshow('gray_im',gray_im)
         # cv2.waitKey(0)
         blur_im = cv2.GaussianBlur(gray_im, (3,3),1)
-        # cv2.imshow('blur_im',blur_im)
+        blur_im_plant = cv2.GaussianBlur(gray_im_plant, (11,11),1)
+
+        # cv2.imshow('blur_im',blur_im_plant)
         # cv2.waitKey(0)
         # canny_im = cv2.Canny(blur_im, 50, 150)
         # cv2.imshow('canny_im',canny_im)
         # cv2.waitKey(0)
-
+        ## sure plant segmentation
+        lightness_thresh=80
+        blur_im_plant[HLS_image[:,:,1]>lightness_thresh]=0
+        ret,im_bin = cv2.threshold(blur_im_plant,1,255,cv2.THRESH_BINARY)
+        im_bin = cv2.erode(im_bin,(11,11),iterations=1)
+        im_bin = cv2.dilate(im_bin,(5,5),iterations=3)
+        # cv2.imshow('im_bin',im_bin)
         binarized_im = cv2.adaptiveThreshold(blur_im,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY_INV,5,3)
+        # cv2.imshow('binarized_im',binarized_im)
+        # binarized_im=cv2.subtract(binarized_im, im_bin);
+        # cv2.imshow('binarized_im_subtracted',binarized_im)
+        # cv2.waitKey(0)
         # cv2.imshow('binarized_im',binarized_im)
         # kernel = np.ones((3,3),np.uint8)
         # closed_im = cv2.morphologyEx(binarized_im1, cv2.MORPH_CLOSE, kernel)
@@ -152,7 +171,7 @@ class cable_preprocesser(object):
 
         # the idea is to count the slope of the lines
         # try:
-        linesP = cv2.HoughLinesP(thinned_im, 1, np.pi / 180, hough_tresh, None,minLineLength=minLineLength_value,maxLineGap=maxLineGap_value)
+        linesP = cv2.HoughLinesP(thinned_im, rho=5,theta=np.pi/180,threshold=hough_tresh, lines=None,minLineLength=minLineLength_value,maxLineGap=maxLineGap_value)
         angle_list=[]
         b_list=[]
         if linesP is not None:
@@ -227,6 +246,7 @@ class cable_preprocesser(object):
                 lines_borders_pixels.append(holder_vector)
                 cv2.line(chosen_lines_im_thinned, (u1, v1), (u2, v2), (r,g,b), 2, cv2.LINE_AA)
                 cv2.line(only_cables_image, (u1, v1), (u2, v2), (255,255,255), 2, cv2.LINE_AA)
+                cv2.line(color_image_rect_copy, (u1, v1), (u2, v2), (r,g,b), 2, cv2.LINE_AA)
 
         lines_borders_pixels=np.array(lines_borders_pixels) # u1 v1 u2 v2
         # rospy.loginfo(lines_borders_pixels)
@@ -253,8 +273,9 @@ class cable_preprocesser(object):
         # plt.imshow(chosen_lines_im_thinned)
 
 
-        # cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
-        # cv2.waitKey(0)
+        # cv2.imshow("Detected Lines enlarged - Probabilistic Line Transform", chosen_lines_im_thinned)
+        cv2.imshow("on color", color_image_rect_copy)
+        cv2.waitKey(0)
         # rospy.loginfo("histogram part")
         # plt.figure("histogram")
         # angle_list_sorted=np.sort(angle_list)
