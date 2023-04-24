@@ -22,7 +22,7 @@ import sknw
 import matplotlib.pyplot as plt
 from wand.image import Image as ImgWand
 import itertools
-
+from scipy.spatial import KDTree
 
 class gem_detector(object):
     def __init__(self):
@@ -33,6 +33,7 @@ class gem_detector(object):
         self.cropParam=[0.2,0.4,0.2,0.2] #top, right, bottom, left
         self.crop_box=[0.0,0.0]
         self.radius=80
+        self.step=60
         # Node cycle rate (in Hz).
         #self.loop_rate = rospy.Rate(10)
         self.bridge = CvBridge()
@@ -72,6 +73,10 @@ class gem_detector(object):
         # self.u= 770
         # self.v= 320
 
+        self.u= 780
+        self.v= 360
+
+
         ## rosbag3
         #far point
         # self.u= 320
@@ -84,11 +89,6 @@ class gem_detector(object):
         #red band
         # self.u= 500
         # self.v= 330
-        ## rosbag 7 #### to recalibrate
-        #red band
-        self.u= 690
-        self.v= 350
-
         ################3 rosbags maqueta
         ## First
         # self.u= 720
@@ -121,6 +121,175 @@ class gem_detector(object):
         ## SingleBranch3
         # self.u= 570
         # self.v= 330
+    def sliding_window(self,image, stepSize, windowSize):
+        for y in range(0, image.shape[0], stepSize):
+            for x in range(0, image.shape[1], stepSize):
+                yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
+
+    def extractFeatures(self,window):
+        ## gem detector.....
+        crop_img=np.copy(window[2])
+        HLS_image = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HLS_FULL)
+###############################3
+        lightness_thresh=100
+##################################3
+        crop_img[HLS_image[:,:,1]>lightness_thresh]=0        # Segmenting by light
+        gray_im = cv2.cvtColor(crop_img, cv2.COLOR_RGB2GRAY)
+        ret,im_bin = cv2.threshold(gray_im,1,255,cv2.THRESH_BINARY)
+        ret,im_bin_inv = cv2.threshold(gray_im,1,255,cv2.THRESH_BINARY_INV)
+        # 2 use algorithm to take only branch of interest
+        ####################### watershed SEGMENTATION
+        img=np.copy(crop_img)
+        gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        ret, thresh = cv2.threshold(gray,1,255,cv2.THRESH_BINARY)
+        kernel = np.ones((3,3),np.uint8)
+        opening = cv2.morphologyEx(thresh,cv2.MORPH_OPEN,kernel, iterations = 1)
+        sure_bg = cv2.dilate(opening,kernel,iterations=1)
+        dist_transform = cv2.distanceTransform(opening,cv2.DIST_L2,5)
+        ret, sure_fg = cv2.threshold(dist_transform,0.2*dist_transform.max(),255,0)
+        sure_fg = np.uint8(sure_fg)
+        unknown = cv2.subtract(sure_bg,sure_fg) # do i have it already ?
+        ret, markers = cv2.connectedComponents(sure_fg)
+        #### Add one to all labels so that sure background is not 0, but 1
+        markers = markers+1
+        #### Now, mark the region of unknown with zero
+        markers[unknown==255] = 0
+        #### apply watershed
+        markers = cv2.watershed(img,markers)
+        #### we need to find marker with max area.
+        number_of_markers=markers.max()+1
+        #### Iterate through markers and save result of area of each
+        max_holder=[]
+        for num in range(2, number_of_markers):
+            area=np.count_nonzero(markers==num)
+            max_holder.append((area,num))
+
+        #### chosing marker with max area
+        max_holder=np.array(max_holder)
+        if max_holder.size ==0:
+            return
+        chosen_marker_idx=np.argmax(max_holder[:,0])
+        chosen_marker=max_holder[chosen_marker_idx,1]
+        #### taking the biggest branch outside borders and background
+        branch_mask=((markers==chosen_marker).astype("bool")).astype(np.uint8)
+        ret,branch_mask= cv2.threshold(branch_mask,0,255,cv2.THRESH_BINARY)
+        #### underlining borders on image
+        img[markers == -1] = [255,0,0]
+        crop_img_viewer=cv2.resize(img, (500,500), interpolation = cv2.INTER_AREA)
+        #### apply mask to image
+        color_mask=np.copy(crop_img)
+        color_mask[np.invert(branch_mask.astype("bool"))]=np.array([0,0,0])
+        grey_mask= np.copy(gray_im)
+        grey_mask[np.invert(branch_mask.astype("bool"))]=0
+        crop_img_viewer=cv2.resize(color_mask, (500,500), interpolation = cv2.INTER_AREA)
+        # cv2.imshow("color_mask",crop_img_viewer.astype(np.uint8))
+        # cv2.waitKey(0)
+
+        img = np.copy(color_mask)
+        grey_mask=np.copy(grey_mask)
+
+
+        th,bin_mask=cv2.threshold(grey_mask,0,255,cv2.THRESH_BINARY)
+        crop_img_viewer=cv2.resize(bin_mask, (500,500), interpolation = cv2.INTER_AREA)
+        # cv2.imshow(" bin_mask_pura",crop_img_viewer.astype(np.uint8))
+
+
+        #### mask enhancment because gems are very hard to detect
+        # try with creating a kernel that enhances the gems!
+        skeleton = skeletonize(bin_mask.astype('bool')).astype(np.uint8) # using scipy function
+        skeleton=np.array(skeleton)*255
+        pixelpointsCV2 = np.array(cv2.findNonZero(skeleton))
+        u_vector=pixelpointsCV2[:,0,0]
+        v_vector=pixelpointsCV2[:,0,1]
+        a, b = np.polyfit(u_vector, v_vector, 1)
+
+        a_deg=-np.arctan(a)*180/np.pi # rotation of branch
+        kernel= cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(11,3))
+        kernel_1= cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
+        kernel[kernel==255]=1
+        kernel_rotated=scind.rotate(kernel.astype(np.uint8),int(a_deg),reshape=True)
+        np.set_printoptions(threshold=sys.maxsize)
+
+        bin_mask_1= cv2.morphologyEx(bin_mask, cv2.MORPH_CLOSE, kernel_rotated) # closing with elliptical kernel
+        crop_img_viewer=cv2.resize(bin_mask_1, (500,500), interpolation = cv2.INTER_AREA)
+
+        skeleton_dil=cv2.dilate(skeleton.astype(np.uint8),(3,3),iterations = 1) # dilation for seeing it
+        crop_img_viewer=cv2.resize(skeleton_dil, (500,500), interpolation = cv2.INTER_AREA)
+        lineJunctions = """
+        3>:
+            1,-,1
+            -,1,-
+            -,1,-;
+        3>:
+            -,1,-
+            -,1,1
+            1,-,-;
+        3>:
+            1,-,-
+            -,1,-
+            1,-,1
+        """
+        # Clone the original image as we are about to destroy it
+        with ImgWand.from_array(skeleton) as junctionsImage:
+            junctionsImage.morphology(method='hit_and_miss', kernel=lineJunctions)
+            junctions=np.copy(np.array(junctionsImage))
+
+        junction_gray=cv2.cvtColor(junctions,cv2.COLOR_BGR2GRAY)
+        th,junctions_bin=cv2.threshold(junction_gray,0,255,cv2.THRESH_BINARY)
+        crop_img_viewer=cv2.resize(junctions_bin, (500,500), interpolation = cv2.INTER_AREA)
+        kernel= cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+        junctions_dil = cv2.dilate(junctions_bin,kernel,iterations = 2).astype(np.uint8)
+        junctions_visualizer=np.zeros(color_mask.shape,np.uint8)
+        junctions_visualizer[junctions_dil==255]=np.array([0,0,255])
+
+        skel_visualizer = np.zeros(color_mask.shape,np.uint8)
+        skel_visualizer[skeleton==255]=np.array([0,255,255])
+        crop_img_visualizer=np.copy(crop_img)
+
+        overlapped_1 = cv2.addWeighted(skel_visualizer, 0.5, crop_img_visualizer, 1, 0)
+        overlapped_2 = cv2.addWeighted(junctions_visualizer, 1, overlapped_1, 1, 0)
+
+################### removing redundancies
+        junctions_vector = np.array(np.nonzero(junctions_bin))
+        # print(junctions_vector)
+        # plt.plot(junctions_vector[0,:], junctions_vector[1,:], marker="o", markersize=20, markeredgecolor="red", markerfacecolor="green")
+        # plt.show()
+        coords = (np.array([junctions_vector[1,:],junctions_vector[0,:]]).T).tolist()
+        if not coords:
+            return
+
+        # plt.plot(clean_coords[:,0], clean_coords[:,1], marker="o", markersize=20, markeredgecolor="red", markerfacecolor="green")
+        # plt.show()
+
+        # cv2.imshow("overlapped_clean",crop_img_viewer.astype(np.uint8))
+        # cv2.waitKey(0)
+        ## chose the two points closest to the image center!
+        coords=np.array(coords)
+        if coords.shape[0]==1:
+            rospy.logerr("Not Enough Gems Found !!!!!!!!!!!!")
+            return
+        elif coords.shape[0]==2:
+            chosen_gems=np.copy(coords)
+        else:
+            distance_vector=np.sqrt((coords[:,0]-self.radius)*(coords[:,0]-self.radius) + (coords[:,1]-self.radius)*(coords[:,1]-self.radius))
+            k = 2 # top2 values
+            idx_gems = np.argpartition(distance_vector, k)
+            chosen_gems=coords[idx_gems[:k]]
+
+
+
+
+        img = np.copy(color_mask)
+        for point in chosen_gems:
+            cv2.circle(img,tuple(point),2,(0,0,255),-1)
+
+        crop_img_viewer=cv2.resize(img, (700,700), interpolation = cv2.INTER_AREA)
+        # cv2.imshow("selected_gems",crop_img_viewer.astype(np.uint8))
+        # cv2.waitKey(0)
+
+        chosen_gems=np.copy(coords) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+        features=np.copy(chosen_gems)
+        return features
 
     def reading_callback(self, color_image_rect, depth_image_rect):
         # rospy.loginfo("""Reconfigure Request: {left_crop_param}, {right_crop_param},{top_crop_param}, {bottom_crop_param}""".format(**config))
@@ -130,12 +299,68 @@ class gem_detector(object):
         depth_image_rect=np.frombuffer(depth_image_rect.data, dtype=np.uint16).reshape(depth_image_rect.height, depth_image_rect.width)
         depth_image_rect_copy=np.copy(depth_image_rect)
         color_image_rect_copy=np.copy(color_image_rect)
+        color_image_rect_copy = cv2.cvtColor(color_image_rect_copy, cv2.COLOR_BGR2RGB)
 
 
         depth_image_rect_copy[depth_image_rect_copy >1500]=0
         depth_image_rect_copy[depth_image_rect_copy <350]=0
 
+
+
+
+
+
+        features = np.zeros([1, 2])
+        windows = self.sliding_window(color_image_rect_copy, self.step, (self.radius*2, self.radius*2))
+        for window in windows:
+            featureVector = self.extractFeatures(window)
+            # print(window[0])
+            # print(window[1])
+            # print("THIS IS FEATURE VECTOR!!")
+            # print(featureVector)
+            if featureVector is not None:
+                featureVector[:,0]=featureVector[:,0]+window[0]
+                featureVector[:,1]=featureVector[:,1]+window[1]
+                features=np.concatenate((features, featureVector), axis=0)
+
+
+        coords = ((np.array([features[:,0],features[:,1]]).T).astype(np.uint16)).tolist()
         image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2RGB)
+        for point in coords:
+            center_coordinates = (point[0], point[1])
+            cv2.circle(image,center_coordinates,2,(0,0,255),-1)
+
+        cv2.imshow('image',image)
+        rospy.logwarn(coords)
+        coords_copy=coords.copy()
+        # tree = KDTree(features)
+        # rows_to_fuse = tree.query_pairs(r=15,output_type='ndarray')
+        # print(repr(features[list(rows_to_fuse)]))
+        # print(repr(rows_to_fuse))
+###############################
+        threshold=(0.01,0.01)
+
+        combos_test = itertools.combinations(coords_copy, 2)
+        # for point1, point2 in combos:
+        #     print(point1)
+        #     print(point2)
+
+        points_to_remove = [point2
+                            for point1, point2 in combos_test
+                            if (abs(point1[0]-point2[0])<=threshold[0]) and (abs(point1[1]-point2[1])<=threshold[1])]
+
+        points_to_keep = [point for point in coords_copy if point not in points_to_remove]
+##############################
+        clean_coords=np.array(points_to_keep)
+        # clean_coords=self.process(coords,threshold=(1,1))
+        rospy.logwarn(clean_coords)
+        image2 = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2RGB)
+        for point_ in clean_coords:
+            center_coordinates = (point_[0], point_[1])
+            cv2.circle(image2,center_coordinates,2,(0,0,255),4)
+
+        cv2.imshow('image2',image2)
+        cv2.waitKey(0)
         # things to do :
         # 0 get image crop around a radious in image
         # 1 search for cvresize way to see big  branch  in image crop
@@ -179,6 +404,7 @@ class gem_detector(object):
 
         crop_img_depth=scind.grey_dilation(crop_img_depth,(5,5)) # dilating and reapplying mask
         crop_img_depth[im_bin_inv.astype('bool')]=0
+
         # cv_image_norm = cv2.normalize(crop_img_depth, None, 0, 255, cv2.NORM_MINMAX)
         # crop_img_viewer_1=cv2.resize(cv_image_norm, (500,500), interpolation = cv2.INTER_AREA)
         # cv2.imshow('crop_img_depth_masked',crop_img_viewer_1.astype(np.uint8))
@@ -678,7 +904,8 @@ class gem_detector(object):
         combos = itertools.combinations(input_list, 2)
         points_to_remove = [point2
                             for point1, point2 in combos
-                            if abs(point1[0]-point2[0])<=threshold[0] and abs(point1[1]-point2[1])<=threshold[1]]
+                            if (abs(point1[0]-point2[0])<=threshold[0]) and (abs(point1[1]-point2[1])<=threshold[1])]
+        print(len(points_to_remove))
         points_to_keep = [point for point in input_list if point not in points_to_remove]
         return points_to_keep
 

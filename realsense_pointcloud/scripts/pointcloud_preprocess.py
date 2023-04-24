@@ -105,8 +105,8 @@ class pcl_preprocesser(object):
         # HSL_MaxLight = np.array([255, lightness_thresh, 255],np.uint8)
         # cv2.imshow('HLS_image',HLS_image)
         # cv2.waitKey(0)
-        # HLS_image_without_lightness = cv2.inRange(HLS_image[:,:,1], lightness_thresh, 255)
-        # cv2.imshow('HLS_image_whithout_lightness',HLS_image_without_lightness)
+        HLS_image_without_lightness = cv2.inRange(HLS_image[:,:,1], lightness_thresh, 255)
+        cv2.imshow('HLS_image_whithout_lightness',HLS_image_without_lightness)
 
 
         cv2.waitKey(0)
@@ -312,7 +312,9 @@ class pcl_preprocesser(object):
         #################33 Testing grey_dil_4
         # depth_image_rect_copy = np.copy(grey_dil_4)
         depth_image_rect_copy[HLS_image[:,:,1]>lightness_thresh]=0
-
+        cv_image_norm = cv2.normalize(depth_image_rect_copy, None, 0, 255, cv2.NORM_MINMAX)
+        cv2.imshow('grey_dil_3',cv_image_norm.astype(np.uint8))
+        cv2.waitKey(0)
 
 
         ######################## PUBLISHING
