@@ -37,10 +37,11 @@
 
 
     <!--The node removes points with higher intensity ( light ) publishes /filtered_depth_image-->
-    <node name="pointcloud_preprocess" pkg="realsense_pointcloud" type="pointcloud_preprocess.py" output="screen" />
-    <!-- <node name="pointcloud_cable_preprocess" pkg="realsense_pointcloud" type="pointcloud_cables_pcl.py" output="screen" /> -->
+    <!-- <node name="pointcloud_preprocess" pkg="realsense_pointcloud" type="pointcloud_preprocess.py" output="screen" /> -->
+    <!-- <node name="pointcloud_preprocess_ground_truth" pkg="realsense_pointcloud" type="pointcloud_preproces_ground_truth.py" output="screen" /> -->
+    <node name="pointcloud_cable_preprocess" pkg="realsense_pointcloud" type="pointcloud_cables_pcl.py" output="screen" />
     <!-- <node name="cropper" pkg="realsense_pointcloud" type="crop.py" output="screen" /> -->
-    <node name="gem_detector_node" pkg="realsense_pointcloud" type="gem_detector.py" output="screen" />
+    <!-- <node name="gem_detector_node" pkg="realsense_pointcloud" type="gem_detector.py" output="screen" /> -->
     <!-- <node name="gem_detector_node_sliding" pkg="realsense_pointcloud" type="gem_detector_sliding_window.py" output="screen" /> -->
 
 

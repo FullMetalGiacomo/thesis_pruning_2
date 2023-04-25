@@ -89,8 +89,8 @@ class cable_preprocesser(object):
         depth_image_rect_copy_cables=np.copy(depth_image_rect_copy)
         color_image_rect_copy=np.copy(color_image_rect)
         color_image_rect_copy = cv2.cvtColor(color_image_rect_copy, cv2.COLOR_BGR2RGB)
-        cv2.imshow('color_image_rect_copy',color_image_rect_copy)
-        cv2.waitKey(0)
+        # cv2.imshow('color_image_rect_copy',color_image_rect_copy)
+        # cv2.waitKey(0)
         HLS_image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2HLS_FULL)
 
         ################################################# CABLES SEGMENTATION https://docs.opencv.org/3.4/d9/db0/tutorial_hough_lines.html
@@ -235,18 +235,18 @@ class cable_preprocesser(object):
         lines_borders_pixels=[]
         if chosen_lines is not None:
             for i in range(0, len(chosen_lines[0])):
-                r = np.random.randint(256)
-                g = np.random.randint(256)
-                b = np.random.randint(256)
+                r = 255
+                g = 0
+                b = 0
                 u1 = 0
                 v1 = int(chosen_lines[0,i])
                 u2 = 1280
                 v2 = int(u2*np.tan(chosen_lines[1,i]*np.pi/180)+chosen_lines[0,i])
                 holder_vector=np.array([u1, v1, u2, v2])
                 lines_borders_pixels.append(holder_vector)
-                cv2.line(chosen_lines_im_thinned, (u1, v1), (u2, v2), (r,g,b), 2, cv2.LINE_AA)
+                cv2.line(chosen_lines_im_thinned, (u1, v1), (u2, v2), (b,g,r), 2, cv2.LINE_AA)
                 cv2.line(only_cables_image, (u1, v1), (u2, v2), (255,255,255), 2, cv2.LINE_AA)
-                cv2.line(color_image_rect_copy, (u1, v1), (u2, v2), (r,g,b), 2, cv2.LINE_AA)
+                cv2.line(color_image_rect_copy, (u1, v1), (u2, v2), (b,g,r), 2, cv2.LINE_AA)
 
         lines_borders_pixels=np.array(lines_borders_pixels) # u1 v1 u2 v2
         # rospy.loginfo(lines_borders_pixels)
