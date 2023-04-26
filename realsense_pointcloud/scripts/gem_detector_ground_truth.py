@@ -44,11 +44,46 @@ class gem_detector(object):
         self.pruning_point=rospy.Publisher('/pruning_point_pose',PoseStamped, queue_size=1)
         # Subscribers
 
+    def draw_circle(self,event,x,y,flags,param):
+        if event == cv2.EVENT_LBUTTONDBLCLK:
+            self.u=x
+            self.v=y
+            if self.u <self.radius:
+                self.u = self.radius
+            if self.u >1280 -self.radius:
+                self.u = 1280 -self.radius
+            if self.v <self.radius:
+                self.v = self.radius
+            if self.v >720 -self.radius:
+                self.v = 720 -self.radius
+            cv2.destroyAllWindows()
+
     def get_point(self):
-        ## rosbag 0
-        #red band
-        self.u= 1080
-        self.v= 270
+
+
+        ## rosbag 0 clockwise
+        #branch1 1
+        self.u= 190
+        self.v= 420
+        # 2
+        # self.u= 210
+        # self.v= 380
+        # 3
+        # self.u= 190
+        # self.v= 330
+        # 4
+        # self.u= 170
+        # self.v= 230
+        # 5
+        # self.u= 150
+        # self.v= 100
+        #branch2 1
+        # self.u= 300
+        # self.v= 240
+        #
+
+
+
         #other point
         # self.u= 800
         # self.v= 130
@@ -136,6 +171,15 @@ class gem_detector(object):
         depth_image_rect_copy[depth_image_rect_copy <350]=0
 
         image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2RGB)
+
+        # self.get_point() # getting the point from the hand
+
+        img = np.copy(image)
+        cv2.namedWindow('image')
+        cv2.setMouseCallback('image',self.draw_circle)
+        cv2.imshow('image',img)
+        cv2.waitKey(0)
+
         # things to do :
         # 0 get image crop around a radious in image
         # 1 search for cvresize way to see big  branch  in image crop
@@ -143,11 +187,11 @@ class gem_detector(object):
         # 3 apply harris detector ( first study it )
         # we get the point from the hand and we crop around the interest point
         cv2.startWindowThread()
-        self.get_point() # getting the point from the hand
+
         image_point=np.copy(image)
         image_point = cv2.circle(image_point, (self.u,self.v), radius=3, color=(0, 0, 255), thickness=-1)
         image_point_area = cv2.circle(image_point, (self.u,self.v), radius=self.radius, color=(255, 0, 0), thickness=2)
-        cv2.imshow('image',image_point)
+        # cv2.imshow('image',image_point)
         ##### cropping around the point
         crop_img = image[self.v-self.radius:self.v+self.radius,self.u-self.radius:self.u+self.radius]
         crop_img_visualizer=np.copy(crop_img)
@@ -175,14 +219,14 @@ class gem_detector(object):
         # crop_img_viewer_1=cv2.resize(im_bin_inv.astype(np.uint8), (500,500), interpolation = cv2.INTER_AREA)
         # cv2.imshow('im_bin_inv',crop_img_viewer_1)
         crop_img_viewer_1=cv2.resize(im_bin.astype(np.uint8), (500,500), interpolation = cv2.INTER_AREA)
-        cv2.imshow('im_bin',crop_img_viewer_1)
+        # cv2.imshow('im_bin',crop_img_viewer_1)
 
         crop_img_depth=scind.grey_dilation(crop_img_depth,(5,5)) # dilating and reapplying mask
         crop_img_depth[im_bin_inv.astype('bool')]=0
         # cv_image_norm = cv2.normalize(crop_img_depth, None, 0, 255, cv2.NORM_MINMAX)
         # crop_img_viewer_1=cv2.resize(cv_image_norm, (500,500), interpolation = cv2.INTER_AREA)
         # cv2.imshow('crop_img_depth_masked',crop_img_viewer_1.astype(np.uint8))
-        cv2.waitKey(0)
+        # cv2.waitKey(0)
 
         ######################## now we have both a crop of depth and image
         # 2 use algorithm to take only branch of interest
@@ -244,7 +288,7 @@ class gem_detector(object):
         #### underlining borders on image
         img[markers == -1] = [255,0,0]
         crop_img_viewer=cv2.resize(img, (500,500), interpolation = cv2.INTER_AREA)
-        cv2.imshow("img",crop_img_viewer.astype(np.uint8))
+        # cv2.imshow("img",crop_img_viewer.astype(np.uint8))
         # cv2.imshow('im_bin',im_bin)
 
         #### apply mask to image
@@ -253,10 +297,10 @@ class gem_detector(object):
         grey_mask= np.copy(gray_im)
         grey_mask[np.invert(branch_mask.astype("bool"))]=0
         crop_img_viewer=cv2.resize(color_mask, (500,500), interpolation = cv2.INTER_AREA)
-        cv2.imshow("color_mask",crop_img_viewer.astype(np.uint8))
+        # cv2.imshow("color_mask",crop_img_viewer.astype(np.uint8))
         # crop_img_viewer=cv2.resize(grey_mask, (500,500), interpolation = cv2.INTER_AREA)
         # cv2.imshow("grey_mask",crop_img_viewer.astype(np.uint8))
-        cv2.waitKey(0)
+        # cv2.waitKey(0)
 
         ######################## now we have the segmentation of the branch of interest
         # 3 Detect the gems, we skeletonize the image and we call a match with the junctions
@@ -356,7 +400,7 @@ class gem_detector(object):
 
         th,bin_mask=cv2.threshold(grey_mask,0,255,cv2.THRESH_BINARY)
         crop_img_viewer=cv2.resize(bin_mask, (500,500), interpolation = cv2.INTER_AREA)
-        cv2.imshow(" bin_mask_pura",crop_img_viewer.astype(np.uint8))
+        # cv2.imshow(" bin_mask_pura",crop_img_viewer.astype(np.uint8))
 
 
         #### mask enhancment because gems are very hard to detect
@@ -375,7 +419,7 @@ class gem_detector(object):
 
         a_deg=-np.arctan(a)*180/np.pi # rotation of branch
         # kernel=cv2.dilate(kernel.astype(np.uint8), kernel_1,iterations=1)
-        kernel= cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(11,3))
+        kernel= cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(11,5))
         kernel_1= cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
         kernel[kernel==255]=1
         kernel_rotated=scind.rotate(kernel.astype(np.uint8),int(a_deg),reshape=True)
@@ -386,11 +430,11 @@ class gem_detector(object):
         bin_mask_1= cv2.morphologyEx(bin_mask, cv2.MORPH_CLOSE, kernel_rotated) # closing with elliptical kernel
         # bin_mask_22= cv2.dilate(bin_mask, kernel_rotated,iterations=1)
         crop_img_viewer=cv2.resize(bin_mask_1, (500,500), interpolation = cv2.INTER_AREA)
-        cv2.imshow(" bin_mask_1 closed rotated",crop_img_viewer.astype(np.uint8))
+        # cv2.imshow(" bin_mask_1 closed rotated",crop_img_viewer.astype(np.uint8))
 
         skeleton_dil=cv2.dilate(skeleton.astype(np.uint8),(3,3),iterations = 1) # dilation for seeing it
         crop_img_viewer=cv2.resize(skeleton_dil, (500,500), interpolation = cv2.INTER_AREA)
-        cv2.imshow("skeleton_dil",crop_img_viewer.astype(np.uint8))
+        # cv2.imshow("skeleton_dil",crop_img_viewer.astype(np.uint8))
 
         #### using wand to detect the junctions of the skel
         #
@@ -431,8 +475,8 @@ class gem_detector(object):
         junction_gray=cv2.cvtColor(junctions,cv2.COLOR_BGR2GRAY)
         th,junctions_bin=cv2.threshold(junction_gray,0,255,cv2.THRESH_BINARY)
         crop_img_viewer=cv2.resize(junctions_bin, (500,500), interpolation = cv2.INTER_AREA)
-        cv2.imshow("junctions_bin",crop_img_viewer.astype(np.uint8))
-        cv2.waitKey(0)
+        # cv2.imshow("junctions_bin",crop_img_viewer.astype(np.uint8))
+        # cv2.waitKey(0)
         kernel= cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
         junctions_dil = cv2.dilate(junctions_bin,kernel,iterations = 2).astype(np.uint8)
         junctions_visualizer=np.zeros(color_mask.shape,np.uint8)
@@ -444,14 +488,14 @@ class gem_detector(object):
         overlapped_2 = cv2.addWeighted(junctions_visualizer, 1, overlapped_1, 1, 0)
 
         crop_img_viewer=cv2.resize(overlapped_2, (700,700), interpolation = cv2.INTER_AREA)
-        cv2.imshow("overlapped_2",crop_img_viewer.astype(np.uint8))
-        cv2.waitKey(0)
+        # cv2.imshow("overlapped_2",crop_img_viewer.astype(np.uint8))
+        # cv2.waitKey(0)
 
 #################### removing redundancies
         junctions_vector = np.array(np.nonzero(junctions_bin))
-        print(junctions_vector)
-        plt.plot(junctions_vector[0,:], junctions_vector[1,:], marker="o", markersize=20, markeredgecolor="red", markerfacecolor="green")
-        plt.show()
+        # print(junctions_vector)
+        # plt.plot(junctions_vector[0,:], junctions_vector[1,:], marker="o", markersize=20, markeredgecolor="red", markerfacecolor="green")
+        # plt.show()
         threshold=(12,12)
         coords = (np.array([junctions_vector[1,:],junctions_vector[0,:]]).T).tolist()
         rospy.logerr(coords)
@@ -459,8 +503,8 @@ class gem_detector(object):
         rospy.logerr(clean_coords)
         clean_coords=np.array(clean_coords)
         rospy.logerr(clean_coords)
-        plt.plot(clean_coords[:,0], clean_coords[:,1], marker="o", markersize=20, markeredgecolor="red", markerfacecolor="green")
-        plt.show()
+        # plt.plot(clean_coords[:,0], clean_coords[:,1], marker="o", markersize=20, markeredgecolor="red", markerfacecolor="green")
+        # plt.show()
 
         overlapped_clean=np.copy(overlapped_1)  # shows new points on image
         for point in clean_coords:
@@ -473,9 +517,18 @@ class gem_detector(object):
 #####################3 Selecting Middle point!
         ## chose the two points closest to the image center!
         print(clean_coords.shape)
-        if clean_coords.shape[0]==1 or clean_coords.shape[0]==0:
+        if clean_coords.shape[0]==0 or clean_coords.shape[0]==0:
             rospy.logerr("Not Enough Gems Found !!!!!!!!!!!!")
             return
+        if clean_coords.shape[0]==1:
+            rospy.logwarn("Just One Gem Found !!!!!!!!!!!!")
+            img = np.copy(crop_img_visualizer)
+            cv2.circle(img,tuple(clean_coords[0,:]),2,(0,0,255),-1)
+            crop_img_viewer=cv2.resize(img, (700,700), interpolation = cv2.INTER_AREA)
+            cv2.imshow("selected_cutting_point",crop_img_viewer.astype(np.uint8))
+            cv2.waitKey(0)
+            return
+
         elif clean_coords.shape[0]==2:
             chosen_gems=np.copy(clean_coords)
         else:
@@ -492,8 +545,8 @@ class gem_detector(object):
             cv2.circle(img,tuple(point),2,(0,0,255),-1)
 
         crop_img_viewer=cv2.resize(img, (700,700), interpolation = cv2.INTER_AREA)
-        cv2.imshow("selected_gems",crop_img_viewer.astype(np.uint8))
-        cv2.waitKey(0)
+        # cv2.imshow("selected_gems",crop_img_viewer.astype(np.uint8))
+        # cv2.waitKey(0)
 
         ## place cutting point in the middle and on skeleton
         mean_u=int(np.mean(chosen_gems[:,0]))
@@ -506,14 +559,14 @@ class gem_detector(object):
         img = np.copy(color_mask)
         cv2.circle(img,tuple(cutting_point),2,(0,0,255),-1)
         crop_img_viewer=cv2.resize(img, (700,700), interpolation = cv2.INTER_AREA)
-        cv2.imshow("selected_cutting_point",crop_img_viewer.astype(np.uint8))
+        # cv2.imshow("selected_cutting_point",crop_img_viewer.astype(np.uint8))
 
         img = np.copy(color_mask)
         cv2.circle(img,tuple(corrected_cutting_point),2,(0,0,255),-1)
         crop_img_viewer=cv2.resize(img, (700,700), interpolation = cv2.INTER_AREA)
-        cv2.imshow("selected corrected cutting point",crop_img_viewer.astype(np.uint8))
+        # cv2.imshow("selected corrected cutting point",crop_img_viewer.astype(np.uint8))
 
-        cv2.waitKey(0)
+        # cv2.waitKey(0)
 #####################3 Build 3D point
         ## bring point into img coordinates
         chosen_gems[:,0]=chosen_gems[:,0]+self.u -self.radius

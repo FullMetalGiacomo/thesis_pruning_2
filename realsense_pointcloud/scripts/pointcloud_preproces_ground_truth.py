@@ -315,18 +315,28 @@ class pcl_preprocesser(object):
         depth_image_rect_copy[depth_image_rect_copy <350]=0
         # depth_image_rect_copy[depth_image_rect_copy >1400]=255
 
+        ###########3 create the ground truth mask
         depth_image_rect_copy_2[HLS_image[:,:,1]>lightness_thresh]=0
         copy_ground_truth=np.copy(depth_image_rect_copy_2)
+        copy_ground_truth[copy_ground_truth>1200]=0
+
+        mask_ground_truth_bin=np.zeros(shape=(720,1280),dtype = np.uint8)
+        mask_ground_truth_bin[copy_ground_truth!=0]=255
+
+        cv2.imshow('mask_ground_truth_bin',mask_ground_truth_bin.astype(np.uint8))
+        cv2.waitKey(0)
+
         copy_ground_truth = cv2.normalize(copy_ground_truth, None, 0, 255, cv2.NORM_MINMAX)
         copy_ground_truth = cv2.cvtColor(copy_ground_truth,cv2.COLOR_GRAY2RGB)
         copy_ground_truth = cv2.convertScaleAbs(copy_ground_truth)
+
+
         fake_image = np.zeros(shape=(720,1280,3),dtype = np.uint8)
         ground_truth=np.zeros(shape=(720,1280))
-        fake_image[depth_image_rect_copy>1200]=np.array([0,0,255])
+        fake_image[mask_ground_truth_bin.astype("bool")]=np.array([240, 32, 160])
 
-        overlapped_1 = cv2.addWeighted(color_image_rect_copy_2, 1, fake_image, 1, 0)
+        overlapped_1 = cv2.addWeighted(color_image_rect_copy_2, 1, fake_image, 0.5, 0)
         # copy_ground_truth[copy_ground_truth==1400]=255
-        cv_image_norm = cv2.normalize(copy_ground_truth, None, 0, 255, cv2.NORM_MINMAX)
         cv2.imshow('1.2 meter threshold',overlapped_1.astype(np.uint8))
         cv2.waitKey(0)
 
