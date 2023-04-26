@@ -195,8 +195,8 @@ class gem_detector(object):
         ##### cropping around the point
         crop_img = image[self.v-self.radius:self.v+self.radius,self.u-self.radius:self.u+self.radius]
         crop_img_visualizer=np.copy(crop_img)
-        crop_img_viewer = cv2.resize(crop_img, (500,500), interpolation = cv2.INTER_AREA)
-        cv2.imshow('crop_img',crop_img_viewer)
+        # crop_img_viewer = cv2.resize(crop_img, (500,500), interpolation = cv2.INTER_AREA)
+        # cv2.imshow('crop_img',crop_img_viewer)
 
         #### binarizing and segmenting
         r=242
@@ -513,7 +513,7 @@ class gem_detector(object):
 
         crop_img_viewer=cv2.resize(overlapped_clean, (700,700), interpolation = cv2.INTER_AREA)
         cv2.imshow("overlapped_clean",crop_img_viewer.astype(np.uint8))
-        cv2.waitKey(0)
+        # cv2.waitKey(0)
 #####################3 Selecting Middle point!
         ## chose the two points closest to the image center!
         print(clean_coords.shape)
