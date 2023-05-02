@@ -25,122 +25,52 @@ import itertools
 
 class gem_detector(object):
     def __init__(self):
-        # Params
-        # self.known_w = 0.5 #In cm
-        # self.cam_inf=rospy.wait_for_message("/usb_cam/camera_info", CameraInfo)
-        # self.focal_length=self.cam_inf.K[0]
-        self.cropParam=[0.2,0.4,0.2,0.2] #top, right, bottom, left
-        self.crop_box=[0.0,0.0]
+        # radius of the image window in pixels
         self.radius=80
-        # Node cycle rate (in Hz).
-        #self.loop_rate = rospy.Rate(10)
+        # initializing cvbridge
         self.bridge = CvBridge()
-
-
+        self.finger_pose_msg=PoseStamped()
         # Publishers
         self.rgb_pub = rospy.Publisher('/gems_rgb_image',  Image, queue_size=1)
         self.depth_map_pub = rospy.Publisher('/gems_depth_image',  Image, queue_size=1)
         self.pruning_point=rospy.Publisher('/pruning_point_pose',PoseStamped, queue_size=1)
-        # Subscribers
 
     def get_point(self):
+        ## transforming finger pose into pixel!
+        x = self.finger_pose_msg.pose.position.x
+        y = self.finger_pose_msg.pose.position.y
+        z = self.finger_pose_msg.pose.position.z
+
+        self.u= int(x*self.K[0]/z +self.K[2])
+        self.v= int(y*self.K[4]/z +self.K[5])
+
         ## rosbag 0
         #red band
-        self.u= 1080
-        self.v= 270
+        # self.u= 1080
+        # self.v= 270
         #other point
         # self.u= 800
         # self.v= 130
 
-        ## rosbag 1
-        #cluster
-        # self.u= 780
-        # self.v= 150
-        #other point
-        # self.u= 460
-        # self.v= 260
 
-        ## rosbag 2
-        #red band
-        # self.u= 910
-        # self.v= 230
-        #red band
-        # self.u= 1050
-        # self.v= 210
-        #red band
-        # self.u= 770
-        # self.v= 320
 
-        ## rosbag3
-        #far point
-        # self.u= 320
-        # self.v= 370
-        #close point
-        # self.u= 280
-        # self.v= 140
-
-        ## rosbag 5 #### to recalibrate
-        #red band
-        # self.u= 500
-        # self.v= 330
-        ## rosbag 7 #### to recalibrate
-        #red band
-        # self.u= 690
-        # self.v= 350
-
-        ################3 rosbags maqueta
-        ## First
-        # self.u= 720
-        # self.v= 270
-
-        ## Second
-        # self.u= 870
-        # self.v= 410
-
-        ## Third ## nice to see effect of light
-        # self.u= 870
-        # self.v= 390
-
-        ## Fourth
-        # self.u= 730
-        # self.v= 370
-
-        # ## Fifth
-        # self.u= 610
-        # self.v= 300
-
-        ## SingleBranch1
-        # self.u= 610
-        # self.v= 250
-
-        ## SingleBranch2
-        # self.u= 1050
-        # self.v= 590
-
-        ## SingleBranch3
-        # self.u= 570
-        # self.v= 330
-
-    def reading_callback(self, color_image_rect, depth_image_rect):
-        # rospy.loginfo("""Reconfigure Request: {left_crop_param}, {right_crop_param},{top_crop_param}, {bottom_crop_param}""".format(**config))
+    def reading_callback(self,color_image_rect, depth_image_rect):
         ################################################# READING
         img_header=color_image_rect.header
         color_image_rect=np.frombuffer(color_image_rect.data, dtype=np.uint8).reshape(color_image_rect.height, color_image_rect.width, -1)
         depth_image_rect=np.frombuffer(depth_image_rect.data, dtype=np.uint16).reshape(depth_image_rect.height, depth_image_rect.width)
         depth_image_rect_copy=np.copy(depth_image_rect)
         color_image_rect_copy=np.copy(color_image_rect)
-
-
         depth_image_rect_copy[depth_image_rect_copy >1500]=0
         depth_image_rect_copy[depth_image_rect_copy <350]=0
-
         image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2RGB)
+
         # things to do :
         # 0 get image crop around a radious in image
-        # 1 search for cvresize way to see big  branch  in image crop
-        # 2 use algorithm to take only branch of interest
-        # 3 apply harris detector ( first study it )
+        # 1 Apply watershed algorithm to isolate the branch
+        # 2 find skel of crop img and call the nodes as gems.
         # we get the point from the hand and we crop around the interest point
+
         cv2.startWindowThread()
         self.get_point() # getting the point from the hand
         image_point=np.copy(image)
@@ -154,10 +84,6 @@ class gem_detector(object):
         cv2.imshow('crop_img',crop_img_viewer)
 
         #### binarizing and segmenting
-        r=242
-        g=222
-        b=130
-        # crop_img[np.invert((crop_img[:,:,0]<b) & (crop_img[:,:,1]<g) & (crop_img[:,:,2]<r))]=0 # Segmenting by color
         HLS_image = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HLS_FULL)
         lightness_thresh=100
         crop_img[HLS_image[:,:,1]>lightness_thresh]=0        # Segmenting by light
@@ -166,6 +92,7 @@ class gem_detector(object):
         ret,im_bin_inv = cv2.threshold(gray_im,1,255,cv2.THRESH_BINARY_INV)
         # crop_img_viewer = cv2.resize(crop_img, (500,500), interpolation = cv2.INTER_AREA)
         # cv2.imshow('crop_img_grey',crop_img_viewer)
+
         ### get also crop from depth image
         crop_img_depth=depth_image_rect_copy[self.v-self.radius:self.v+self.radius,self.u-self.radius:self.u+self.radius]
         # cv_image_norm = cv2.normalize(crop_img_depth, None, 0, 255, cv2.NORM_MINMAX)
@@ -184,7 +111,7 @@ class gem_detector(object):
         cv2.waitKey(0)
 
         ######################## now we have both a crop of depth and image
-        # 2 use algorithm to take only branch of interest
+        #  use watershed algorithm to isolate the branch
         ####################### watershed SEGMENTATION
         img=np.copy(crop_img)
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -262,43 +189,7 @@ class gem_detector(object):
         # the idea is that the skel of branch will have nodes where the gems are!
         ####################### skeletonizing and detecting the junctions
 
-
-
-        #### tryed to find junctions with packge that gives as output a graph of the skeleton (skwn)
-        # super slow algorithm didnt like it but it was a good track, it didnt separate junctions from endpoints
-        # img = np.copy(color_mask)
-        # grey_mask=np.copy(grey_mask)
-        # th,bin_mask=cv2.threshold(grey_mask,0,255,cv2.THRESH_BINARY)
-        # kernel= cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
-        # bin_mask = cv2.morphologyEx(bin_mask, cv2.MORPH_CLOSE, kernel)
-        # print(kernel)
-        # # bin_mask = cv2.erode(bin_mask,kernel,iterations = 2)
-        # crop_img_viewer=cv2.resize(bin_mask, (500,500), interpolation = cv2.INTER_AREA)
-        # cv2.imshow("bin_mask",crop_img_viewer.astype(np.uint8))
-        #
-        # ske = skeletonize(bin_mask).astype(np.uint16)
-        # # build graph from skeleton
-        # graph = sknw.build_sknw(ske)
-        #
-        # # draw image
-        # plt.imshow(bin_mask, cmap='gray')
-        #
-        # # draw edges by pts
-        # for (s,e) in graph.edges():
-        #     ps = graph[s][e]['pts']
-        #     plt.plot(ps[:,1], ps[:,0], 'green')
-        #
-        # # draw node by o
-        # nodes = graph.nodes()
-        # print(nodes[2])
-        # ps = np.array([nodes[i]['o'] for i in nodes])
-        # plt.plot(ps[:,1], ps[:,0], 'r.')
-        #
-        # # title and show
-        # plt.title('Build Graph')
-        # plt.show()
-        # cv2.waitKey(0)
-        #### the skeletonization with regular algorithm was shit, skeletonizaition using scipy
+        #### keletonizaition using scipy
         img = np.copy(color_mask)
         grey_mask=np.copy(grey_mask)
 
@@ -309,28 +200,25 @@ class gem_detector(object):
 
 
         #### mask enhancment because gems are very hard to detect
-        # try with creating a kernel that enhances the gems!
-        # find best line following the skeleto
-        # rotate the elliptical kernel perpendicular to the branch
-        # bin_mask_1 = cv2.morphologyEx(bin_mask, cv2.MORPH_CLOSE, kernel) # closing with elliptical kernel
-        # bin_mask_1= cv2.dilate(bin_mask_1, kernel,iterations=1)
+
         skeleton = skeletonize(bin_mask.astype('bool')).astype(np.uint8) # using scipy function
         skeleton=np.array(skeleton)*255
+
+        # get rotation of branch
         pixelpointsCV2 = np.array(cv2.findNonZero(skeleton))
         u_vector=pixelpointsCV2[:,0,0]
         v_vector=pixelpointsCV2[:,0,1]
         a, b = np.polyfit(u_vector, v_vector, 1)
-
         a_deg=-np.arctan(a)*180/np.pi # rotation of branch
-        # kernel=cv2.dilate(kernel.astype(np.uint8), kernel_1,iterations=1)
+
+        # define closing kernel
         kernel= cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(13,5))
         kernel_1= cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
         kernel[kernel==255]=1
+        # align closing kerner with branch
         kernel_rotated=scind.rotate(kernel.astype(np.uint8),int(a_deg),reshape=True)
-        np.set_printoptions(threshold=sys.maxsize)
 
         bin_mask_1= cv2.morphologyEx(bin_mask, cv2.MORPH_CLOSE, kernel_rotated) # closing with elliptical kernel
-        # bin_mask_22= cv2.dilate(bin_mask, kernel_rotated,iterations=1)
         crop_img_viewer=cv2.resize(bin_mask_1, (500,500), interpolation = cv2.INTER_AREA)
         cv2.imshow(" bin_mask_1 closed rotated",crop_img_viewer.astype(np.uint8))
 
@@ -342,11 +230,8 @@ class gem_detector(object):
 
 
         # Find line-junctions using Top-Hat Morphology
-        # There are three kernels here, separated by a semi-colon
-        # Each is rotated through 90 degress to form all 4 orientations
-        # The first 3x3 kernel is the one tinted yellow in the diagram above
-        # The second 3x3 kernel is the one tinted magenta in the diagram above
-        # The third 3x3 kernel is the one tinted cyan in the diagram above
+        # define the kernels for detecting line junctions
+        # https://legacy.imagemagick.org/Usage/morphology/
         lineJunctions = """
         3>:
             1,-,1
@@ -389,16 +274,12 @@ class gem_detector(object):
 
 #################### removing redundancies
         junctions_vector = np.array(np.nonzero(junctions_bin))
-        print(junctions_vector)
         plt.plot(junctions_vector[0,:], junctions_vector[1,:], marker="o", markersize=20, markeredgecolor="red", markerfacecolor="green")
         plt.show()
         threshold=(12,12)
         coords = (np.array([junctions_vector[1,:],junctions_vector[0,:]]).T).tolist()
-        rospy.logerr(coords)
         clean_coords=self.process(coords,threshold) # removes the points close to each other
-        rospy.logerr(clean_coords)
         clean_coords=np.array(clean_coords)
-        rospy.logerr(clean_coords)
         plt.plot(clean_coords[:,0], clean_coords[:,1], marker="o", markersize=20, markeredgecolor="red", markerfacecolor="green")
         plt.show()
 
@@ -412,19 +293,12 @@ class gem_detector(object):
         cv2.waitKey(0)
 #####################3 Selecting Middle point!
         ## chose the two points closest to the image center!
-        if clean_coords.shape[0]==0:
+        if clean_coords.shape[0]==0 or clean_coords.shape[0]==1:
             rospy.logerr("Not Enough Gems Found !!!!!!!!!!!!")
             rospy.logwarn("Giving Back Hand Point")
+            self.publish_finger_point()
             return
-        if clean_coords.shape[0]==1:
-            rospy.logwarn("Just One Gem Found !!!!!!!!!!!!")
-            rospy.logwarn("Giving Back Hand Point")
-            img = np.copy(crop_img_visualizer)
-            cv2.circle(img,tuple(clean_coords[0,:]),2,(0,0,255),-1)
-            crop_img_viewer=cv2.resize(img, (700,700), interpolation = cv2.INTER_AREA)
-            cv2.imshow("selected_cutting_point",crop_img_viewer.astype(np.uint8))
-            cv2.waitKey(0)
-            return
+
         elif clean_coords.shape[0]==2:
             chosen_gems=np.copy(clean_coords)
         else:
@@ -448,9 +322,8 @@ class gem_detector(object):
         mean_u=int(np.mean(chosen_gems[:,0]))
         mean_v=int(np.mean(chosen_gems[:,1]))
         cutting_point=np.array([mean_u,mean_v])
-        print(cutting_point)
+        # moving cutting point on skel
         corrected_cutting_point=np.squeeze(self.find_nearest_white(skeleton,cutting_point))
-        print(corrected_cutting_point)
 
         img = np.copy(color_mask)
         cv2.circle(img,tuple(cutting_point),2,(0,0,255),-1)
@@ -488,13 +361,18 @@ class gem_detector(object):
 ################# Publish point
         x= (mean_dist/self.K[0])*(corrected_cutting_point[0]-self.K[2])
         y= (mean_dist/self.K[4])*(corrected_cutting_point[1]-self.K[5])
+        print(a_deg)
+        roll = 0
+        pitch = 0
+        yaw = np.radians(-a_deg)
+        [qx, qy, qz, qw] = self.get_quaternion_from_euler(roll,pitch,yaw)
         point=PoseStamped()
 
         point.header = img_header
-        point.pose.orientation.x = 0.0
-        point.pose.orientation.y = 0.0
-        point.pose.orientation.z = 0.0
-        point.pose.orientation.w = 1.0
+        point.pose.orientation.x = qx
+        point.pose.orientation.y = qy
+        point.pose.orientation.z = qz
+        point.pose.orientation.w = qw
 
         point.pose.position.x = x
         point.pose.position.y = y
@@ -517,10 +395,25 @@ class gem_detector(object):
         nearest_index = np.argmin(distances)
         return nonzero[nearest_index]
 
+    def publish_finger_point(self):
+        self.pruning_point.publish(self.finger_pose_msg)
+
+    def get_quaternion_from_euler(self,roll, pitch, yaw):
+
+      #Convert an Euler angle to a quaternion.
+      qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+      qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+      qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+      qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+
+      return [qx, qy, qz, qw]
 
 
     def start(self):
         rospy.loginfo("gem_detector_is_starting ...")
+        rospy.loginfo("Subscribing to /finger_pose topic...")
+        self.finger_pose_msg=rospy.wait_for_message("/finger_pose", PoseStamped)
+        rospy.loginfo("finger_pose received!")
         color_image_rect = message_filters.Subscriber('/camera/color/image_raw', Image)
         depth_image_rect = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
         cam_inf=rospy.wait_for_message("/camera/color/camera_info", CameraInfo)
@@ -529,7 +422,6 @@ class gem_detector(object):
 
         ts.registerCallback(self.reading_callback)
         rospy.loginfo("gem_detector_is_working......")
-        # rospy.logerr(sys.version)
 
         rospy.spin()
 
