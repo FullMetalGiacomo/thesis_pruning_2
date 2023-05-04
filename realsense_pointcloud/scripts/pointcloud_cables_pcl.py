@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import sys
-import math
 
 import cv2
 from matplotlib import pyplot as plt
@@ -9,19 +7,15 @@ import rospy
 import time
 # import open3d as o3d
 from sensor_msgs.msg import Image, CameraInfo, CompressedImage
-from std_msgs.msg import Float64MultiArray
 import numpy as np
-from dynamic_reconfigure.server import Server
 
 from sensor_msgs.msg import PointCloud2, PointField
 import sensor_msgs.point_cloud2 as pc2
 import ctypes
 import struct
-from sensor_msgs.msg import PointCloud2, PointField
 from std_msgs.msg import Header
 
 import message_filters
-from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 
 from skspatial.objects import Plane, Points
@@ -44,18 +38,12 @@ class cable_preprocesser(object):
         # initializing cvbridge
         self.bridge = CvBridge()
         # Publishers
-        self.depth_cables_pub = rospy.Publisher('/filtered_depth_cables',  Image, queue_size=1)
         self.pcl_cables_pub = rospy.Publisher('/cables_artificial_pointcloud', PointCloud2, queue_size=10)
         self.points_of_plane_pub = rospy.Publisher('/points_of_plane', PointCloud2, queue_size=10)
         self.points_of_plane_rot_pub = rospy.Publisher('/points_of_plane_rot', PointCloud2, queue_size=10)
 
 
 
-    def pixels_to_camera_coord(self,K,u,v,z):
-        # K enters in the linearized form: (fx,0,ox,0,fy,oy,0,0,1)
-        x= (z/K[0])*(u-K[2])
-        y= (z/K[4])*(v-K[5])
-        return x,y
 
     def reading_callback(self,color_image_rect, depth_image_rect):
         ################################################# READING
@@ -222,7 +210,7 @@ class cable_preprocesser(object):
         reco_vector_pcl[:,2]=fake_image_vector[:,2]
 
         # creating plane
-        my_node.publishPC2_points_of_plane(reco_vector_pcl/1000,depth_image_rect) # visualization purposes
+        self.publishPC2_points_of_plane(reco_vector_pcl/1000,depth_image_rect) # visualization purposes
         points = Points(reco_vector_pcl)
         plane = Plane.best_fit(points)
 
@@ -273,7 +261,7 @@ class cable_preprocesser(object):
             derotated_test_points[:,1]= derotated_test_points[:,1] + plane.point[1]/1000
             derotated_test_points[:,2]= derotated_test_points[:,2] + plane.point[2]/1000
 
-            my_node.publishPC2_points_of_plane_rotated(derotated_test_points,depth_image_rect)
+            self.publishPC2_points_of_plane_rotated(derotated_test_points,depth_image_rect)
             ## rebuild plane
             points = Points(derotated_test_points*1000)
             plane = Plane.best_fit(points)
@@ -352,7 +340,7 @@ class cable_preprocesser(object):
             cloud_array=cloud_array[(cloud_array[:,2]>0)&(cloud_array[:,1]<3)]
 
             ###################  tranforming to PointCloud2 msg
-            my_node.publishPC2(cloud_array,depth_image_rect) # publish the cables as a pointcloud
+            self.publishPC2(cloud_array,depth_image_rect) # publish the cables as a pointcloud
 
 
 

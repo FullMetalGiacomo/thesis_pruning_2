@@ -59,6 +59,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
 FILES
 gems_service.srv
+cables_service.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -73,6 +74,7 @@ gems_service.srv
    DEPENDENCIES
    std_msgs  # Or other packages containing msgs
    geometry_msgs
+   sensor_msgs
  )
 
 ################################################
