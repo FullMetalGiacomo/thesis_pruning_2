@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 
-import sys
 import cv2
 import rospy
 from sensor_msgs.msg import Image, CameraInfo
 from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Float64MultiArray
 import numpy as np
-from dynamic_reconfigure.server import Server
-from realsense_pointcloud.cfg import Reconfig_paramsConfig
 
 
 import message_filters
@@ -22,6 +18,7 @@ import matplotlib.pyplot as plt
 from wand.image import Image as ImgWand
 import itertools
 
+#rostopic pub /finger_pose geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "camera_color_optical_frame"}, pose: {position: {x: 0.5, y: -0.15, z: 1.0}, orientation: {w: 1.0}}}'
 
 class gem_detector(object):
     def __init__(self):
@@ -31,8 +28,6 @@ class gem_detector(object):
         self.bridge = CvBridge()
         self.finger_pose_msg=PoseStamped()
         # Publishers
-        self.rgb_pub = rospy.Publisher('/gems_rgb_image',  Image, queue_size=1)
-        self.depth_map_pub = rospy.Publisher('/gems_depth_image',  Image, queue_size=1)
         self.pruning_point=rospy.Publisher('/pruning_point_pose',PoseStamped, queue_size=1)
 
     def get_point(self):
@@ -55,6 +50,7 @@ class gem_detector(object):
 
 
     def reading_callback(self,color_image_rect, depth_image_rect):
+        print("we are inside reading callback")
         ################################################# READING
         img_header=color_image_rect.header
         color_image_rect=np.frombuffer(color_image_rect.data, dtype=np.uint8).reshape(color_image_rect.height, color_image_rect.width, -1)
@@ -347,6 +343,7 @@ class gem_detector(object):
         crop_img_depth[inv_bin_mask.astype('bool')]=0
         trues=(crop_img_depth != 0)
         depth_vector=crop_img_depth[trues]
+        print(depth_vector)
         mean_dist=depth_vector.mean()/1000
         ## transform in x y
 

@@ -17,12 +17,13 @@ from cv_bridge import CvBridge, CvBridgeError
 
 import scipy.ndimage as scind
 from skimage.morphology import skeletonize
-import sknw
 
 import matplotlib.pyplot as plt
 from wand.image import Image as ImgWand
 import itertools
 
+from numpy import linalg as LA
+from mpl_toolkits.mplot3d import Axes3D
 
 class gem_detector(object):
     def __init__(self):
@@ -37,6 +38,11 @@ class gem_detector(object):
         #self.loop_rate = rospy.Rate(10)
         self.bridge = CvBridge()
 
+        #fake image
+        self.u_img=np.arange(0,1280,dtype=int)
+        self.u_img=np.resize(self.u_img,(720,1280))
+        self.v_img=np.array(np.arange(0,720))
+        self.v_img=np.resize(self.v_img,(1280,720)).T
 
         # Publishers
         self.rgb_pub = rospy.Publisher('/gems_rgb_image',  Image, queue_size=1)
@@ -575,11 +581,59 @@ class gem_detector(object):
         corrected_cutting_point[1]=corrected_cutting_point[1]+self.v-self.radius
         ## find distance of point
         inv_bin_mask=cv2.bitwise_not(bin_mask)
+        inv_bin_mask = cv2.dilate(inv_bin_mask, (3,3), iterations=2)
+        cv2.imshow("inv_bin_mask",inv_bin_mask.astype(np.uint8))
+        cv2.waitKey(0)
         crop_img_depth[inv_bin_mask.astype('bool')]=0
         trues=(crop_img_depth != 0)
         depth_vector=crop_img_depth[trues]
         mean_dist=depth_vector.mean()/1000
-        ## transform in x y
+
+        ## searching 3D rotation
+        depth_image_rotation=np.zeros(shape=(720,1280))
+        depth_image_rotation[self.v-self.radius:self.v+self.radius,self.u-self.radius:self.u+self.radius]=crop_img_depth
+        fake_image = np.zeros(shape=(720,1280,3))
+        fake_image[:,:,0]=self.u_img
+        fake_image[:,:,1]=self.v_img
+        fake_image[:,:,2]= depth_image_rotation # taking the depth information of cables
+        fake_image_vector=np.reshape(fake_image,(1280*720,3))
+        fake_image_vector = fake_image_vector[(fake_image_vector[:,2] != 0)] #removing depth rows =0
+
+        remove_idx= np.random.randint(0,fake_image_vector.shape[0],int(fake_image_vector.shape[0]*0.8)) # removing 0.n% of data
+        fake_image_vector=np.delete(fake_image_vector, remove_idx, axis=0)
+
+        reco_vector_pcl= np.zeros(shape=(fake_image_vector.shape[0],3))
+        reco_vector_pcl[:,0]=(fake_image_vector[:,2]/self.K[0])*(fake_image_vector[:,0]-self.K[2])
+        reco_vector_pcl[:,1]=(fake_image_vector[:,2]/self.K[4])*(fake_image_vector[:,1]-self.K[5])
+        reco_vector_pcl[:,2]=fake_image_vector[:,2]
+        reco_vector_pcl=reco_vector_pcl/1000
+
+        reco_vector_pcl[:,0]=reco_vector_pcl[:,0]-np.mean(reco_vector_pcl[:,0])
+        reco_vector_pcl[:,1]=reco_vector_pcl[:,1]-np.mean(reco_vector_pcl[:,1])
+        reco_vector_pcl[:,2]=reco_vector_pcl[:,2]-np.mean(reco_vector_pcl[:,2])
+
+        cov = np.cov([reco_vector_pcl[:,0], reco_vector_pcl[:,1], reco_vector_pcl[:,2]])
+        w, v = LA.eig(cov) # eigenvalues and eigenvector
+        v1=v[:,0]
+        v2=v[:,1]
+        v3=v[:,2]
+
+        ############plotting
+        # fig = plt.figure()
+        # ax = fig.add_subplot(projection='3d')
+        # ax.scatter(reco_vector_pcl[:,0], reco_vector_pcl[:,1], reco_vector_pcl[:,2],edgecolors='k')
+        # ax.set_xlabel('X Label')
+        # ax.set_ylabel('Y Label')
+        # ax.set_zlabel('Z Label')
+        # ax.scatter(v1[0], v1[1], v1[2],'r')
+        # ax.scatter(v2[0], v2[1], v2[2],'c')
+        # ax.scatter(v3[0], v3[1], v3[2],'b')
+        # plt.plot([v1[0],0],[v1[1],0],zs=[v1[2],0],linewidth=2, markersize=10)
+        #
+        # plt.show()
+        Yaw = np.arctan2(v1[0],v1[1])
+        Pitch = np.arctan2(np.sqrt(v1[0]*v1[0] + v1[1]*v1[1]),v1[2])
+        ##################3
 
         img = np.copy(color_image_rect)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -592,16 +646,17 @@ class gem_detector(object):
 ################# Publish point
         x= (mean_dist/self.K[0])*(corrected_cutting_point[0]-self.K[2])
         y= (mean_dist/self.K[4])*(corrected_cutting_point[1]-self.K[5])
-        print(x)
-        print(y)
-        print(mean_dist)
+        roll = 0
+        pitch = np.arcsin(v1[2])
+        yaw = np.radians(-a_deg) # yaw resulted more stable from image than from 3d cloud.
+        [qx, qy, qz, qw] = self.get_quaternion_from_euler(roll,pitch,yaw)
         point=PoseStamped()
 
         point.header = img_header
-        point.pose.orientation.x = 0.0
-        point.pose.orientation.y = 0.0
-        point.pose.orientation.z = 0.0
-        point.pose.orientation.w = 1.0
+        point.pose.orientation.x = qx
+        point.pose.orientation.y = qy
+        point.pose.orientation.z = qz
+        point.pose.orientation.w = qw
 
         point.pose.position.x = x
         point.pose.position.y = y
@@ -732,6 +787,16 @@ class gem_detector(object):
 #
 #         cv2.imshow("overlapped_2",overlapped_2.astype(np.uint8))
 #         cv2.waitKey(0)
+
+    def get_quaternion_from_euler(self,roll, pitch, yaw):
+
+        #Convert an Euler angle to a quaternion.
+        qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+        qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+        qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+
+        return [qx, qy, qz, qw]
 
     def process(self,input_list, threshold):
         combos = itertools.combinations(input_list, 2)

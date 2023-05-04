@@ -10,8 +10,9 @@ Panels:
         - /TF1/Frames1
         - /PointCloud210
         - /PointCloud211
+        - /Pose1
       Splitter Ratio: 0.5
-    Tree Height: 325
+    Tree Height: 341
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -500,86 +501,6 @@ Visualization Manager:
           Value: false
         track_wheel_right_link:
           Value: false
-        world_hand_0_index_finger_dip:
-          Value: false
-        world_hand_0_index_finger_mcp:
-          Value: false
-        world_hand_0_index_finger_pip:
-          Value: false
-        world_hand_0_index_finger_tip:
-          Value: false
-        world_hand_0_middle_finger_dip:
-          Value: false
-        world_hand_0_middle_finger_mcp:
-          Value: false
-        world_hand_0_middle_finger_pip:
-          Value: false
-        world_hand_0_middle_finger_tip:
-          Value: false
-        world_hand_0_pinky_dip:
-          Value: false
-        world_hand_0_pinky_mcp:
-          Value: false
-        world_hand_0_pinky_pip:
-          Value: false
-        world_hand_0_ring_finger_dip:
-          Value: false
-        world_hand_0_ring_finger_pip:
-          Value: false
-        world_hand_0_ring_finger_tip:
-          Value: false
-        world_hand_0_ring_middle_mcp:
-          Value: false
-        world_hand_0_thumb_cmc:
-          Value: false
-        world_hand_0_thumb_ip:
-          Value: false
-        world_hand_0_thumb_mcp:
-          Value: false
-        world_hand_0_thumb_tip:
-          Value: false
-        world_hand_0_wrist:
-          Value: false
-        world_hand_1_index_finger_dip:
-          Value: true
-        world_hand_1_index_finger_mcp:
-          Value: true
-        world_hand_1_index_finger_pip:
-          Value: true
-        world_hand_1_index_finger_tip:
-          Value: true
-        world_hand_1_middle_finger_dip:
-          Value: true
-        world_hand_1_middle_finger_mcp:
-          Value: true
-        world_hand_1_middle_finger_pip:
-          Value: true
-        world_hand_1_middle_finger_tip:
-          Value: true
-        world_hand_1_pinky_dip:
-          Value: true
-        world_hand_1_pinky_mcp:
-          Value: true
-        world_hand_1_pinky_pip:
-          Value: true
-        world_hand_1_ring_finger_dip:
-          Value: true
-        world_hand_1_ring_finger_pip:
-          Value: true
-        world_hand_1_ring_finger_tip:
-          Value: true
-        world_hand_1_ring_middle_mcp:
-          Value: true
-        world_hand_1_thumb_cmc:
-          Value: true
-        world_hand_1_thumb_ip:
-          Value: true
-        world_hand_1_thumb_mcp:
-          Value: true
-        world_hand_1_thumb_tip:
-          Value: true
-        world_hand_1_wrist:
-          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -620,86 +541,7 @@ Visualization Manager:
                                                     {}
                                                   camera_left_d435_color_frame:
                                                     camera_left_d435_color_optical_frame:
-                                                      world_hand_0_index_finger_dip:
-                                                        {}
-                                                      world_hand_0_index_finger_mcp:
-                                                        {}
-                                                      world_hand_0_index_finger_pip:
-                                                        {}
-                                                      world_hand_0_index_finger_tip:
-                                                        {}
-                                                      world_hand_0_middle_finger_dip:
-                                                        {}
-                                                      world_hand_0_middle_finger_mcp:
-                                                        {}
-                                                      world_hand_0_middle_finger_pip:
-                                                        {}
-                                                      world_hand_0_middle_finger_tip:
-                                                        {}
-                                                      world_hand_0_pinky_dip:
-                                                        {}
-                                                      world_hand_0_pinky_mcp:
-                                                        {}
-                                                      world_hand_0_pinky_pip:
-                                                        {}
-                                                      world_hand_0_ring_finger_dip:
-                                                        {}
-                                                      world_hand_0_ring_finger_pip:
-                                                        {}
-                                                      world_hand_0_ring_finger_tip:
-                                                        {}
-                                                      world_hand_0_ring_middle_mcp:
-                                                        {}
-                                                      world_hand_0_thumb_cmc:
-                                                        {}
-                                                      world_hand_0_thumb_ip:
-                                                        {}
-                                                      world_hand_0_thumb_mcp:
-                                                        {}
-                                                      world_hand_0_thumb_tip:
-                                                        {}
-                                                      world_hand_0_wrist:
-                                                        {}
-                                                      world_hand_1_index_finger_dip:
-                                                        {}
-                                                      world_hand_1_index_finger_mcp:
-                                                        {}
-                                                      world_hand_1_index_finger_pip:
-                                                        {}
-                                                      world_hand_1_index_finger_tip:
-                                                        {}
-                                                      world_hand_1_middle_finger_dip:
-                                                        {}
-                                                      world_hand_1_middle_finger_mcp:
-                                                        {}
-                                                      world_hand_1_middle_finger_pip:
-                                                        {}
-                                                      world_hand_1_middle_finger_tip:
-                                                        {}
-                                                      world_hand_1_pinky_dip:
-                                                        {}
-                                                      world_hand_1_pinky_mcp:
-                                                        {}
-                                                      world_hand_1_pinky_pip:
-                                                        {}
-                                                      world_hand_1_ring_finger_dip:
-                                                        {}
-                                                      world_hand_1_ring_finger_pip:
-                                                        {}
-                                                      world_hand_1_ring_finger_tip:
-                                                        {}
-                                                      world_hand_1_ring_middle_mcp:
-                                                        {}
-                                                      world_hand_1_thumb_cmc:
-                                                        {}
-                                                      world_hand_1_thumb_ip:
-                                                        {}
-                                                      world_hand_1_thumb_mcp:
-                                                        {}
-                                                      world_hand_1_thumb_tip:
-                                                        {}
-                                                      world_hand_1_wrist:
-                                                        {}
+                                                      {}
                                                   camera_left_d435_depth_frame:
                                                     camera_left_d435_depth_optical_frame:
                                                       {}
@@ -844,6 +686,22 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.05000000074505806
+      Head Radius: 0.05000000074505806
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 0.10000000149011612
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow
+      Topic: /pruning_point_pose
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -872,7 +730,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.4288907051086426
+      Distance: 1.3184726238250732
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -880,27 +738,27 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.019736578688025475
-        Y: -0.04183715581893921
-        Z: 0.7621700167655945
+        X: -0.07047303020954132
+        Y: -0.047849178314208984
+        Z: 0.7644177079200745
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.1552024632692337
+      Pitch: -1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 1.8680037260055542
+      Yaw: 4.387979984283447
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1013
+  Height: 1043
   Hide Left Dock: false
   Hide Right Dock: false
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000028100000357fc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000001c8000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d006100670065010000020b000001890000001600fffffffb0000000a0049006d00610067006500000001fe000000910000000000000000000000010000010f00000363fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000363000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000006900000003efc0100000002fb0000000800540069006d0065010000000000000690000003bc00fffffffb0000000800540069006d00650100000000000004500000000000000000000004090000035700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000028100000375fc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000001d8000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d006100670065010000021b000001970000001600fffffffb0000000a0049006d00610067006500000001fe000000910000000000000000000000010000010f00000363fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000363000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007380000003efc0100000002fb0000000800540069006d0065010000000000000738000003bc00fffffffb0000000800540069006d00650100000000000004500000000000000000000004b10000037500000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -909,6 +767,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1680
-  X: 0
+  Width: 1848
+  X: 72
   Y: 0

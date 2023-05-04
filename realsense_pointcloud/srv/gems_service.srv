@@ -1,0 +1,4 @@
+geometry_msgs/PoseStamped finger
+---
+geometry_msgs/PoseStamped pruning_point
+
