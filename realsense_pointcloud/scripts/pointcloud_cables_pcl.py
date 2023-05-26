@@ -53,6 +53,7 @@ class cable_preprocesser(object):
         depth_image_rect_copy_cables=np.copy(depth_image_rect_copy)
         color_image_rect_copy=np.copy(color_image_rect)
         color_image_rect_copy = cv2.cvtColor(color_image_rect_copy, cv2.COLOR_BGR2RGB)
+        # cv2.imshow('color_im',color_image_rect_copy)
         # cv2.imshow('color_image_rect_copy',color_image_rect_copy)
         # cv2.waitKey(0)
         HLS_image = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2HLS_FULL)
@@ -63,16 +64,15 @@ class cable_preprocesser(object):
 
         ################ image processing to get best thinned image
         gray_im = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
-        gray_im_plant = cv2.cvtColor(color_image_rect, cv2.COLOR_RGB2GRAY)
         # cv2.imshow('gray_im',gray_im)
-        # cv2.waitKey(0)
         blur_im = cv2.GaussianBlur(gray_im, (3,3),1)
-        blur_im_plant = cv2.GaussianBlur(gray_im_plant, (11,11),1)
-
+        # cv2.imshow('blurred_im',blur_im)
         binarized_im = cv2.adaptiveThreshold(blur_im,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY_INV,5,3)
 
-        # cv2.imshow('thinned_bin_1_ghuoall',thinned1)
+        # cv2.imshow('binarized_image',binarized_im)
         thinned_im = cv2.ximgproc.thinning(binarized_im)
+        # cv2.imshow('thinned_image',thinned_im)
+        # cv2.waitKey(0)
 
         ################# Apply Hough transform
         cdst = cv2.cvtColor(thinned_im, cv2.COLOR_GRAY2BGR)
@@ -83,7 +83,7 @@ class cable_preprocesser(object):
         maxLineGap_value =10
 
         # try:
-        linesP = cv2.HoughLinesP(thinned_im, rho=5,theta=np.pi/180,threshold=hough_tresh, lines=None,minLineLength=minLineLength_value,maxLineGap=maxLineGap_value)
+        linesP = cv2.HoughLinesP(thinned_im, rho=5,theta=np.pi/180,threshold=hough_tresh, lines=None ,minLineLength=minLineLength_value,maxLineGap=maxLineGap_value)
         angle_list=[]
         b_list=[]
         if linesP is not None:
@@ -185,7 +185,10 @@ class cable_preprocesser(object):
         plane_points_generators=np.copy(depth_image_rect_copy_cables)
         plane_points_generators[plane_points_generators[:,:] < 400]=0
         plane_points_generators[plane_points_generators[:,:] > 1200]=0 # its millimiters!
-
+        cv_image_norm = cv2.normalize(plane_points_generators, None, 0, 255, cv2.NORM_MINMAX)
+        # cv2.imshow('plane_points_generators',cv_image_norm.astype(np.uint8))
+        # cv2.waitKey(0)
+        #
 
         plane_thresh_im=np.copy(plane_points_generators)
 

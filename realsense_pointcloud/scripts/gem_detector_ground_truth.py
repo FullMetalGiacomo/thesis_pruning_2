@@ -197,12 +197,12 @@ class gem_detector(object):
         image_point=np.copy(image)
         image_point = cv2.circle(image_point, (self.u,self.v), radius=3, color=(0, 0, 255), thickness=-1)
         image_point_area = cv2.circle(image_point, (self.u,self.v), radius=self.radius, color=(255, 0, 0), thickness=2)
-        # cv2.imshow('image',image_point)
+        cv2.imshow('image',image_point)
         ##### cropping around the point
         crop_img = image[self.v-self.radius:self.v+self.radius,self.u-self.radius:self.u+self.radius]
         crop_img_visualizer=np.copy(crop_img)
-        # crop_img_viewer = cv2.resize(crop_img, (500,500), interpolation = cv2.INTER_AREA)
-        # cv2.imshow('crop_img',crop_img_viewer)
+        crop_img_viewer = cv2.resize(crop_img, (500,500), interpolation = cv2.INTER_AREA)
+        cv2.imshow('crop_img',crop_img_viewer)
 
         #### binarizing and segmenting
         r=242
@@ -215,24 +215,24 @@ class gem_detector(object):
         gray_im = cv2.cvtColor(crop_img, cv2.COLOR_RGB2GRAY)
         ret,im_bin = cv2.threshold(gray_im,1,255,cv2.THRESH_BINARY)
         ret,im_bin_inv = cv2.threshold(gray_im,1,255,cv2.THRESH_BINARY_INV)
-        # crop_img_viewer = cv2.resize(crop_img, (500,500), interpolation = cv2.INTER_AREA)
-        # cv2.imshow('crop_img_grey',crop_img_viewer)
+        crop_img_viewer = cv2.resize(crop_img, (500,500), interpolation = cv2.INTER_AREA)
+        cv2.imshow('crop_img_color',crop_img_viewer)
         ### get also crop from depth image
         crop_img_depth=depth_image_rect_copy[self.v-self.radius:self.v+self.radius,self.u-self.radius:self.u+self.radius]
         # cv_image_norm = cv2.normalize(crop_img_depth, None, 0, 255, cv2.NORM_MINMAX)
         # crop_img_viewer=cv2.resize(cv_image_norm, (500,500), interpolation = cv2.INTER_AREA)
         # cv2.imshow('crop_img_depth',crop_img_viewer.astype(np.uint8))
-        # crop_img_viewer_1=cv2.resize(im_bin_inv.astype(np.uint8), (500,500), interpolation = cv2.INTER_AREA)
-        # cv2.imshow('im_bin_inv',crop_img_viewer_1)
+        crop_img_viewer_1=cv2.resize(im_bin_inv.astype(np.uint8), (500,500), interpolation = cv2.INTER_AREA)
+        cv2.imshow('im_bin_inv',crop_img_viewer_1)
         crop_img_viewer_1=cv2.resize(im_bin.astype(np.uint8), (500,500), interpolation = cv2.INTER_AREA)
-        # cv2.imshow('im_bin',crop_img_viewer_1)
+        cv2.imshow('im_bin',crop_img_viewer_1)
 
         crop_img_depth=scind.grey_dilation(crop_img_depth,(5,5)) # dilating and reapplying mask
         crop_img_depth[im_bin_inv.astype('bool')]=0
         # cv_image_norm = cv2.normalize(crop_img_depth, None, 0, 255, cv2.NORM_MINMAX)
         # crop_img_viewer_1=cv2.resize(cv_image_norm, (500,500), interpolation = cv2.INTER_AREA)
         # cv2.imshow('crop_img_depth_masked',crop_img_viewer_1.astype(np.uint8))
-        # cv2.waitKey(0)
+        cv2.waitKey(0)
 
         ######################## now we have both a crop of depth and image
         # 2 use algorithm to take only branch of interest
@@ -289,13 +289,13 @@ class gem_detector(object):
         #### taking the biggest branch outside borders and background
         branch_mask=((markers==chosen_marker).astype("bool")).astype(np.uint8)
         ret,branch_mask= cv2.threshold(branch_mask,0,255,cv2.THRESH_BINARY)
-        # crop_img_viewer=cv2.resize(branch_mask, (500,500), interpolation = cv2.INTER_AREA)
-        # cv2.imshow("branch_mask",crop_img_viewer.astype(np.uint8))
+        crop_img_viewer=cv2.resize(branch_mask, (500,500), interpolation = cv2.INTER_AREA)
+        cv2.imshow("branch_mask",crop_img_viewer.astype(np.uint8))
         #### underlining borders on image
         img[markers == -1] = [255,0,0]
         crop_img_viewer=cv2.resize(img, (500,500), interpolation = cv2.INTER_AREA)
-        # cv2.imshow("img",crop_img_viewer.astype(np.uint8))
-        # cv2.imshow('im_bin',im_bin)
+        cv2.imshow("img",crop_img_viewer.astype(np.uint8))
+        cv2.imshow('im_bin',im_bin)
 
         #### apply mask to image
         color_mask=np.copy(crop_img)
@@ -303,10 +303,10 @@ class gem_detector(object):
         grey_mask= np.copy(gray_im)
         grey_mask[np.invert(branch_mask.astype("bool"))]=0
         crop_img_viewer=cv2.resize(color_mask, (500,500), interpolation = cv2.INTER_AREA)
-        # cv2.imshow("color_mask",crop_img_viewer.astype(np.uint8))
-        # crop_img_viewer=cv2.resize(grey_mask, (500,500), interpolation = cv2.INTER_AREA)
-        # cv2.imshow("grey_mask",crop_img_viewer.astype(np.uint8))
-        # cv2.waitKey(0)
+        cv2.imshow("branch_color_mask",crop_img_viewer.astype(np.uint8))
+        crop_img_viewer=cv2.resize(grey_mask, (500,500), interpolation = cv2.INTER_AREA)
+        cv2.imshow("grey_mask",crop_img_viewer.astype(np.uint8))
+        cv2.waitKey(0)
 
         ######################## now we have the segmentation of the branch of interest
         # 3 Detect the gems, we skeletonize the image and we call a match with the junctions
@@ -435,12 +435,14 @@ class gem_detector(object):
 
         bin_mask_1= cv2.morphologyEx(bin_mask, cv2.MORPH_CLOSE, kernel_rotated) # closing with elliptical kernel
         # bin_mask_22= cv2.dilate(bin_mask, kernel_rotated,iterations=1)
+        crop_img_viewer=cv2.resize(bin_mask, (500,500), interpolation = cv2.INTER_AREA)
+        cv2.imshow(" bin_mask_not_closed",crop_img_viewer.astype(np.uint8))
         crop_img_viewer=cv2.resize(bin_mask_1, (500,500), interpolation = cv2.INTER_AREA)
-        # cv2.imshow(" bin_mask_1 closed rotated",crop_img_viewer.astype(np.uint8))
+        cv2.imshow(" bin_mask_closed_rotated",crop_img_viewer.astype(np.uint8))
 
         skeleton_dil=cv2.dilate(skeleton.astype(np.uint8),(3,3),iterations = 1) # dilation for seeing it
         crop_img_viewer=cv2.resize(skeleton_dil, (500,500), interpolation = cv2.INTER_AREA)
-        # cv2.imshow("skeleton_dil",crop_img_viewer.astype(np.uint8))
+        cv2.imshow("skeleton",crop_img_viewer.astype(np.uint8))
 
         #### using wand to detect the junctions of the skel
         #
@@ -481,9 +483,9 @@ class gem_detector(object):
         junction_gray=cv2.cvtColor(junctions,cv2.COLOR_BGR2GRAY)
         th,junctions_bin=cv2.threshold(junction_gray,0,255,cv2.THRESH_BINARY)
         crop_img_viewer=cv2.resize(junctions_bin, (500,500), interpolation = cv2.INTER_AREA)
-        # cv2.imshow("junctions_bin",crop_img_viewer.astype(np.uint8))
-        # cv2.waitKey(0)
-        kernel= cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+        cv2.imshow("linejunctions_bin",crop_img_viewer.astype(np.uint8))
+        cv2.waitKey(0)
+        kernel= cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
         junctions_dil = cv2.dilate(junctions_bin,kernel,iterations = 2).astype(np.uint8)
         junctions_visualizer=np.zeros(color_mask.shape,np.uint8)
         junctions_visualizer[junctions_dil==255]=np.array([0,0,255])
@@ -494,8 +496,8 @@ class gem_detector(object):
         overlapped_2 = cv2.addWeighted(junctions_visualizer, 1, overlapped_1, 1, 0)
 
         crop_img_viewer=cv2.resize(overlapped_2, (700,700), interpolation = cv2.INTER_AREA)
-        # cv2.imshow("overlapped_2",crop_img_viewer.astype(np.uint8))
-        # cv2.waitKey(0)
+        cv2.imshow("overlapped_junctions",crop_img_viewer.astype(np.uint8))
+        cv2.waitKey(0)
 
 #################### removing redundancies
         junctions_vector = np.array(np.nonzero(junctions_bin))
@@ -565,14 +567,14 @@ class gem_detector(object):
         img = np.copy(color_mask)
         cv2.circle(img,tuple(cutting_point),2,(0,0,255),-1)
         crop_img_viewer=cv2.resize(img, (700,700), interpolation = cv2.INTER_AREA)
-        # cv2.imshow("selected_cutting_point",crop_img_viewer.astype(np.uint8))
+        cv2.imshow("selected_cutting_point",crop_img_viewer.astype(np.uint8))
 
         img = np.copy(color_mask)
         cv2.circle(img,tuple(corrected_cutting_point),2,(0,0,255),-1)
         crop_img_viewer=cv2.resize(img, (700,700), interpolation = cv2.INTER_AREA)
-        # cv2.imshow("selected corrected cutting point",crop_img_viewer.astype(np.uint8))
+        cv2.imshow("selected_and_corrected_cutting_point",crop_img_viewer.astype(np.uint8))
 
-        # cv2.waitKey(0)
+        cv2.waitKey(0)
 #####################3 Build 3D point
         ## bring point into img coordinates
         chosen_gems[:,0]=chosen_gems[:,0]+self.u -self.radius
@@ -585,6 +587,9 @@ class gem_detector(object):
         cv2.imshow("inv_bin_mask",inv_bin_mask.astype(np.uint8))
         cv2.waitKey(0)
         crop_img_depth[inv_bin_mask.astype('bool')]=0
+        cv_image_norm = cv2.normalize(crop_img_depth, None, 0, 255, cv2.NORM_MINMAX)
+        crop_img_viewer=cv2.resize(cv_image_norm, (500,500), interpolation = cv2.INTER_AREA)
+        cv2.imshow('crop_img_depth',crop_img_viewer.astype(np.uint8))
         trues=(crop_img_depth != 0)
         depth_vector=crop_img_depth[trues]
         mean_dist=depth_vector.mean()/1000
@@ -641,13 +646,13 @@ class gem_detector(object):
         cv2.circle(img,tuple(chosen_gems[1,:]),2,(0,255,0),3)
         cv2.circle(img,tuple(corrected_cutting_point),2,(0,0,255),3)
         cv2.circle(img, (self.u,self.v), radius=self.radius, color=(255, 0, 0), thickness=2)
-        cv2.imshow("selected corrected cutting point",img.astype(np.uint8))
+        cv2.imshow("selected_corrected_cutting_point",img.astype(np.uint8))
         cv2.waitKey(0)
 ################# Publish point
         x= (mean_dist/self.K[0])*(corrected_cutting_point[0]-self.K[2])
         y= (mean_dist/self.K[4])*(corrected_cutting_point[1]-self.K[5])
         roll = 0
-        pitch = np.arcsin(v1[2])
+        pitch = np.arcsin(v1[2])- np.pi/2
         yaw = np.radians(-a_deg) # yaw resulted more stable from image than from 3d cloud.
         [qx, qy, qz, qw] = self.get_quaternion_from_euler(roll,pitch,yaw)
         point=PoseStamped()

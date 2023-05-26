@@ -451,7 +451,7 @@ class gem_detector(object):
 
             # print(a_deg)
             roll = 0
-            pitch = np.arcsin(v1[2])
+            pitch = np.arcsin(v1[2]) -np.pi/2
             yaw = np.radians(-a_deg)
             [qx, qy, qz, qw] = self.get_quaternion_from_euler(roll,pitch,yaw)
             point=PoseStamped()

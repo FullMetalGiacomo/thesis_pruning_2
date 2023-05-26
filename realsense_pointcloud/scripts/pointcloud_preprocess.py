@@ -44,7 +44,15 @@ class pcl_preprocesser(object):
         color_image_rect=np.frombuffer(color_image_rect.data, dtype=np.uint8).reshape(color_image_rect.height, color_image_rect.width, -1)
         depth_image_rect_copy=np.frombuffer(depth_image_rect.data, dtype=np.uint16).reshape(depth_image_rect.height, depth_image_rect.width)
         depth_image_tests=np.copy(depth_image_rect_copy)
+        depth_image_tests_1=np.copy(depth_image_rect_copy)
 
+        image_COL = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2RGB)
+        # cv2.imshow('Color image',image_COL)
+        # cv2.waitKey(0)
+        depth_image_tests_1[depth_image_tests_1 >1500]=0
+        depth_image_tests_1[depth_image_tests_1 <350]=0
+        cv_image_norm = cv2.normalize(depth_image_tests_1, None, 0, 255, cv2.NORM_MINMAX)
+        # cv2.imshow('depth_image',cv_image_norm.astype(np.uint8))
 
         ################################################# PLANT SEGMENTATION
 
@@ -60,8 +68,9 @@ class pcl_preprocesser(object):
         if int(idx)>100:
             lightness_thresh=100
 
+        lightness_thresh=100
         HLS_image_without_lightness = cv2.inRange(HLS_image[:,:,1], lightness_thresh, 255)
-        cv2.imshow('HLS_image_whithout_lightness',HLS_image_without_lightness)
+        # cv2.imshow('HLS_image_whithout_lightness',HLS_image_without_lightness)
 
 
         # cv2.waitKey(0)
@@ -82,7 +91,7 @@ class pcl_preprocesser(object):
         im_bin_bool_plant=(HLS_image[:,:,1]<lightness_thresh) # sky
         im_bin=np.zeros(shape=(720,1280))
         im_bin[im_bin_bool_plant]=255
-        # cv2.imshow('im_bin',im_bin)
+        # cv2.imshow('im_bin_bool_sky',im_bin)
         # cv2.waitKey(0)
 
 
@@ -93,15 +102,15 @@ class pcl_preprocesser(object):
         depth_image_tests[depth_image_tests <350]=0
 
 
-        kernel_dil=(11,11)
-        kernel_erosion=(7,7)
+        kernel_dil=(3,3)
+        kernel_erosion=(3,3)
         kernel_blur=(11,11)
         # blur on "normal image"
         grey_dil=scind.grey_dilation(depth_image_tests,kernel_dil)
         processed_depth_image=scind.grey_erosion(grey_dil,kernel_erosion)
         processed_depth_image[im_bin_bool_sky]=0
-        # cv_image_norm = cv2.normalize(blur_im, None, 0, 255, cv2.NORM_MINMAX)
-        # cv2.imshow('blur_im',cv_image_norm.astype(np.uint8))
+        cv_image_norm = cv2.normalize(processed_depth_image, None, 0, 255, cv2.NORM_MINMAX)
+        # cv2.imshow('processed_depth_image',cv_image_norm.astype(np.uint8))
 
         # grey_dil_1=scind.grey_dilation(depth_image_tests,kernel_dil)
         # grey_dil_1=scind.grey_erosion(grey_dil_1,kernel_erosion)
