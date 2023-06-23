@@ -74,6 +74,7 @@ class cable_preprocesser(object):
         # cv2.imshow('thinned_image',thinned_im)
         # cv2.waitKey(0)
 
+
         ################# Apply Hough transform
         cdst = cv2.cvtColor(thinned_im, cv2.COLOR_GRAY2BGR)
         cdstP = np.copy(cdst)
@@ -166,6 +167,8 @@ class cable_preprocesser(object):
 
         # plt.show()
 
+
+
         ############### Creation of cables pointcloud
 
         only_cables_gray_image = cv2.cvtColor(only_cables_image, cv2.COLOR_RGB2GRAY)
@@ -174,6 +177,9 @@ class cable_preprocesser(object):
         # cv2.imshow("binarized_only_cables_im", binarized_only_cables_im)
         # print(type(binarized_only_cables_im))
         binarized_only_cables_im.dtype='bool'
+        # cv2.waitKey(0)
+
+
 
 
         depth_image_rect_copy_cables[binarized_only_cables_im]=0
@@ -316,7 +322,7 @@ class cable_preprocesser(object):
 
             xyz_coord_list=np.reshape(xyz_coord_list,(int(xyz_coord_list.shape[0]*0.5),6)) #contains x1y1z1 x2y2z2 (xyz,xyz)
 
-            ###################################3 find 3d lines
+            ################################### find 3d lines
             # direction_ratios!
             lmn=np.zeros(shape=((xyz_coord_list.shape[0],3)))
             lmn[:,0]=(xyz_coord_list[:,3]-xyz_coord_list[:,0])

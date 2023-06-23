@@ -48,11 +48,11 @@ class pcl_preprocesser(object):
 
         image_COL = cv2.cvtColor(color_image_rect, cv2.COLOR_BGR2RGB)
         # cv2.imshow('Color image',image_COL)
-        # cv2.waitKey(0)
         depth_image_tests_1[depth_image_tests_1 >1500]=0
         depth_image_tests_1[depth_image_tests_1 <350]=0
         cv_image_norm = cv2.normalize(depth_image_tests_1, None, 0, 255, cv2.NORM_MINMAX)
         # cv2.imshow('depth_image',cv_image_norm.astype(np.uint8))
+        # cv2.waitKey(0)
 
         ################################################# PLANT SEGMENTATION
 
@@ -61,8 +61,12 @@ class pcl_preprocesser(object):
         #  Probability distribution
         P = histr/sum(histr);
         w = np.cumsum(P);
+        # plt.plot(w)
         w[w>0.1]=0 # cutting at 10% lightness
         idx=np.argmax(w)
+        # plt.plot(w)
+        # plt.show()
+
 
         lightness_thresh=int(idx)
         if int(idx)>100:
@@ -71,10 +75,12 @@ class pcl_preprocesser(object):
         lightness_thresh=100
         HLS_image_without_lightness = cv2.inRange(HLS_image[:,:,1], lightness_thresh, 255)
         # cv2.imshow('HLS_image_whithout_lightness',HLS_image_without_lightness)
+        # cv2.waitKey(0)
+
 
 
         # cv2.waitKey(0)
-        #############################3 check on brown color filters
+        #############################3 creation of white masks
         r=242
         g=222
         b=130
@@ -109,7 +115,7 @@ class pcl_preprocesser(object):
         grey_dil=scind.grey_dilation(depth_image_tests,kernel_dil)
         processed_depth_image=scind.grey_erosion(grey_dil,kernel_erosion)
         processed_depth_image[im_bin_bool_sky]=0
-        cv_image_norm = cv2.normalize(processed_depth_image, None, 0, 255, cv2.NORM_MINMAX)
+        # cv_image_norm = cv2.normalize(processed_depth_image, None, 0, 255, cv2.NORM_MINMAX)
         # cv2.imshow('processed_depth_image',cv_image_norm.astype(np.uint8))
 
         # grey_dil_1=scind.grey_dilation(depth_image_tests,kernel_dil)
@@ -120,13 +126,12 @@ class pcl_preprocesser(object):
         # cv2.imshow('grey_dil_1',cv_image_norm.astype(np.uint8))
 
 
-#########################################3 creation of mask plant from color images
+
+
 
         # cv_image_norm = cv2.normalize(processed_depth_image, None, 0, 255, cv2.NORM_MINMAX)
         # cv2.imshow('processed_depth_image',cv_image_norm.astype(np.uint8))
         # cv2.waitKey(0)
-
-
         ######################## PUBLISHING
         self.imgmsg_depth = self.bridge.cv2_to_imgmsg(processed_depth_image, "16UC1")
         self.imgmsg_depth.header = depth_image_rect.header
